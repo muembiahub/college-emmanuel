@@ -1,0 +1,14 @@
+{
+  "name": "college-emmanuel-electron",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^26.0.0"
+  },
+  "dependencies": {
+    "college-emmanuel": "file:.."
+  }
+}

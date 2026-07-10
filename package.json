@@ -1,0 +1,23 @@
+{
+  "name": "college-emmanuel",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "electron"
+  ],
+  "description": "Monorepo pour College Emmanuel",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently \"npm:dev --prefix backend\" \"npm:dev --prefix frontend\"",
+    "dev:electron": "npm:dev --prefix electron",
+    "install-all": "npm install --prefix backend && npm install --prefix frontend && npm install --prefix electron"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "dependencies": {
+    "sequelize": "^6.37.8"
+  }
+}
