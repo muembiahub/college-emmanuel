@@ -2,8 +2,10 @@
   "name": "college-emmanuel-backend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "start": "server.js"
   },
   "dependencies": {
     "@getbrevo/brevo": "^6.0.2",
