@@ -2,6 +2,7 @@ import { createNotification } from "../models/scolaireModel.js";
 /**
  * Crée une notification
  */
+
 export const notify = async ({
   type,
   titre,
