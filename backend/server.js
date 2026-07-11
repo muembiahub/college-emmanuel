@@ -6,6 +6,7 @@ import session from "express-session";
 import cors from "cors";
 
 import { fileURLToPath } from "url";
+import { existsSync } from "fs";
 
 import apiRoutes from "./src/routes/api.js";
 import authRouter from "./src/routes/apiAuthRoutes.js";
@@ -30,8 +31,18 @@ const PORT =
   process.env.PORT || 3000;
 
 
-const SUPABASE_URL =
-  (process.env.SUPABASE_URL || "").trim();
+
+/* =========================================================
+   PATH
+========================================================= */
+
+
+const __filename =
+  fileURLToPath(import.meta.url);
+
+
+const __dirname =
+  path.dirname(__filename);
 
 
 
@@ -44,11 +55,15 @@ app.use(
   cors({
 
     origin: [
-      "http://localhost:5173",
-      "http://localhost:3000"
-    ],
 
-    credentials:true
+      "http://localhost:5173",
+      "http://localhost:3000",
+
+      process.env.FRONTEND_URL
+
+    ].filter(Boolean),
+
+    credentials: true
 
   })
 );
@@ -56,7 +71,6 @@ app.use(
 
 
 app.use(
-
   session({
 
     secret:
@@ -64,17 +78,24 @@ app.use(
       "college-emmanuel-secret",
 
 
-    resave:false,
+    resave: false,
 
 
-    saveUninitialized:false,
+    saveUninitialized: false,
 
 
-    cookie:{
+    cookie: {
 
-      httpOnly:true,
+      httpOnly: true,
 
-      secure:false,
+      secure:
+        NODE_ENV === "production",
+
+      sameSite:
+        NODE_ENV === "production"
+          ? "none"
+          : "lax",
+
 
       maxAge:
         24 * 60 * 60 * 1000
@@ -82,17 +103,21 @@ app.use(
     }
 
   })
-
 );
 
 
 
-app.use(express.json());
+app.use(
+  express.json()
+);
+
 
 
 app.use(
   express.urlencoded({
-    extended:true
+
+    extended: true
+
   })
 );
 
@@ -102,7 +127,6 @@ app.set(
   "trust proxy",
   1
 );
-
 
 
 
@@ -123,8 +147,6 @@ app.use(
 
 
 
-
-
 /* =========================================================
    LOGGER
 ========================================================= */
@@ -135,7 +157,9 @@ if(
 ){
 
  app.use(
-   (req,res,next)=>{
+
+  (req,res,next)=>{
+
 
     console.log(
       `➡️ ${req.method} ${req.url}`
@@ -144,12 +168,11 @@ if(
 
     next();
 
-   }
+  }
+
  );
 
 }
-
-
 
 
 
@@ -159,20 +182,31 @@ if(
 
 
 app.use(
+
  "/api",
+
  apiRoutes
+
 );
 
 
+
 app.use(
+
  "/",
+
  authRouter
+
 );
 
 
+
 app.use(
+
  "/dashboard",
+
  dashboardRouter
+
 );
 
 
@@ -180,41 +214,34 @@ app.use(
 
 
 /* =========================================================
-   FRONTEND STATIC
+   FRONTEND HANDLING
 ========================================================= */
 
 
-const __filename =
-  fileURLToPath(import.meta.url);
-
-
-const __dirname =
-  path.dirname(__filename);
-
-
-
-let clientPath;
+let clientPath = null;
 
 
 
 /*
-   En développement :
+    LOCAL DEVELOPMENT
 
-   backend/
-   frontend/dist
-
+    backend/
+    frontend/dist
 */
 
 
 if(
- process.env.NODE_ENV === "development"
+ NODE_ENV === "development"
 ){
 
 
  clientPath =
  path.resolve(
+
    __dirname,
-   "../frontend/dist"
+
+   "../../frontend/dist"
+
  );
 
 
@@ -222,57 +249,125 @@ if(
 
 
 /*
-   En Electron :
+    ELECTRON
 
-   resources/
-      frontend/
+    resources/frontend
 
 */
 
 
-else{
+else if(
+
+ process.resourcesPath
+
+){
 
 
  clientPath =
  path.join(
+
    process.resourcesPath,
+
    "frontend"
+
  );
 
 
 }
 
 
+/*
+    RENDER
 
-console.log(
- "Frontend path:",
- clientPath
-);
+    Backend API only
 
-
-
-app.use(
- express.static(clientPath)
-);
+*/
 
 
-
-app.get(
- "*",
- (req,res)=>{
+else {
 
 
-  res.sendFile(
-    path.join(
-      clientPath,
-      "index.html"
-    )
-  );
+ clientPath = null;
 
 
- }
+}
 
-);
+
+
+if(
+
+ clientPath &&
+
+ existsSync(clientPath)
+
+){
+
+
+ console.log(
+   "Frontend path:",
+   clientPath
+ );
+
+
+ app.use(
+
+  express.static(
+    clientPath
+  )
+
+ );
+
+
+
+ app.get(
+
+  "*",
+
+  (req,res,next)=>{
+
+
+    const indexFile =
+      path.join(
+
+        clientPath,
+
+        "index.html"
+
+      );
+
+
+
+    if(
+      existsSync(indexFile)
+    ){
+
+
+      return res.sendFile(
+        indexFile
+      );
+
+
+    }
+
+
+    next();
+
+
+  }
+
+ );
+
+
+}
+else {
+
+
+ console.log(
+   "ℹ️ Frontend static disabled"
+ );
+
+
+}
 
 
 
@@ -289,21 +384,31 @@ app.use(
 
 
  console.error(
+
    "❌ Error:",
-   err.message
+
+   err
+
  );
 
 
+
  res.status(
+
    err.status || 500
+
  )
  .json({
 
    success:false,
 
+
    error:
+
     err.message ||
+
     "Erreur serveur"
+
 
  });
 
@@ -322,12 +427,14 @@ app.use(
 
 
 app.listen(
+
  PORT,
+
  ()=>{
 
 
  console.log(
-   `✅ Server running at port ${PORT}`
+   `✅ Server running on port ${PORT}`
  );
 
 
@@ -342,4 +449,5 @@ app.listen(
 
 
 }
+
 );
