@@ -12,442 +12,129 @@ import apiRoutes from "./src/routes/api.js";
 import authRouter from "./src/routes/apiAuthRoutes.js";
 import dashboardRouter from "./src/routes/scolaireRoutes.js";
 
-
 /* =========================================================
    ENV
 ========================================================= */
-
 dotenv.config();
 
-
 const app = express();
-
-
-const NODE_ENV =
-  (process.env.NODE_ENV || "development").trim();
-
-
-const PORT =
-  process.env.PORT || 3000;
-
-
+const NODE_ENV = (process.env.NODE_ENV || "development").trim();
+const PORT = process.env.PORT || 3000;
 
 /* =========================================================
    PATH
 ========================================================= */
-
-
-const __filename =
-  fileURLToPath(import.meta.url);
-
-
-const __dirname =
-  path.dirname(__filename);
-
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /* =========================================================
    MIDDLEWARE
 ========================================================= */
-
-
 app.use(
   cors({
-
     origin: [
-
       "http://localhost:5173",
       "http://localhost:3000",
-
-      process.env.FRONTEND_URL
-
+      process.env.FRONTEND_URL,
     ].filter(Boolean),
-
-    credentials: true
-
+    credentials: true,
   })
 );
-
-
 
 app.use(
   session({
-
-    secret:
-      process.env.SESSION_SECRET ||
-      "college-emmanuel-secret",
-
-
+    secret: process.env.SESSION_SECRET || "college-emmanuel-secret",
     resave: false,
-
-
     saveUninitialized: false,
-
-
     cookie: {
-
       httpOnly: true,
-
-      secure:
-        NODE_ENV === "production",
-
-      sameSite:
-        NODE_ENV === "production"
-          ? "none"
-          : "lax",
-
-
-      maxAge:
-        24 * 60 * 60 * 1000
-
-    }
-
+      secure: NODE_ENV === "production",
+      sameSite: NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    },
   })
 );
 
-
-
-app.use(
-  express.json()
-);
-
-
-
-app.use(
-  express.urlencoded({
-
-    extended: true
-
-  })
-);
-
-
-
-app.set(
-  "trust proxy",
-  1
-);
-
-
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.set("trust proxy", 1);
 
 /* =========================================================
    SECURITY
 ========================================================= */
-
-
 app.use(
-
- helmet({
-
-  contentSecurityPolicy:false
-
- })
-
+  helmet({
+    contentSecurityPolicy: false,
+  })
 );
-
-
 
 /* =========================================================
    LOGGER
 ========================================================= */
-
-
-if(
- NODE_ENV === "development"
-){
-
- app.use(
-
-  (req,res,next)=>{
-
-
-    console.log(
-      `➡️ ${req.method} ${req.url}`
-    );
-
-
+if (NODE_ENV === "development") {
+  app.use((req, res, next) => {
+    console.log(`➡️ ${req.method} ${req.url}`);
     next();
-
-  }
-
- );
-
+  });
 }
-
-
 
 /* =========================================================
    API ROUTES
 ========================================================= */
-
-
-app.use(
-
- "/api",
-
- apiRoutes
-
-);
-
-
-
-app.use(
-
- "/",
-
- authRouter
-
-);
-
-
-
-app.use(
-
- "/dashboard",
-
- dashboardRouter
-
-);
-
-
-
-
+app.use("/api", apiRoutes);
+app.use("/", authRouter);
+app.use("/dashboard", dashboardRouter);
 
 /* =========================================================
    FRONTEND HANDLING
 ========================================================= */
-
-
 let clientPath = null;
 
-
-
-/*
-    LOCAL DEVELOPMENT
-
-    backend/
-    frontend/dist
-*/
-
-
-if(
- NODE_ENV === "development"
-){
-
-
- clientPath =
- path.resolve(
-
-   __dirname,
-
-   "../../frontend/dist"
-
- );
-
-
+// Développement local
+if (NODE_ENV === "development") {
+  clientPath = path.resolve(__dirname, "../../frontend/dist");
 }
-
-
-/*
-    ELECTRON
-
-    resources/frontend
-
-*/
-
-
-else if(
-
- process.resourcesPath
-
-){
-
-
- clientPath =
- path.join(
-
-   process.resourcesPath,
-
-   "frontend"
-
- );
-
-
+// Electron
+else if (process.resourcesPath) {
+  clientPath = path.join(process.resourcesPath, "frontend");
 }
-
-
-/*
-    RENDER
-
-    Backend API only
-
-*/
-
-
+// Production (Render)
 else {
-
-
- clientPath = null;
-
-
+  clientPath = path.resolve(__dirname, "../frontend/dist");
 }
 
+if (clientPath && existsSync(clientPath)) {
+  console.log("Frontend path:", clientPath);
 
+  app.use(express.static(clientPath));
 
-if(
-
- clientPath &&
-
- existsSync(clientPath)
-
-){
-
-
- console.log(
-   "Frontend path:",
-   clientPath
- );
-
-
- app.use(
-
-  express.static(
-    clientPath
-  )
-
- );
-
-
-
- app.get(
-
-  "*",
-
-  (req,res,next)=>{
-
-
-    const indexFile =
-      path.join(
-
-        clientPath,
-
-        "index.html"
-
-      );
-
-
-
-    if(
-      existsSync(indexFile)
-    ){
-
-
-      return res.sendFile(
-        indexFile
-      );
-
-
+  app.get("*", (req, res, next) => {
+    const indexFile = path.join(clientPath, "index.html");
+    if (existsSync(indexFile)) {
+      return res.sendFile(indexFile);
     }
-
-
     next();
-
-
-  }
-
- );
-
-
+  });
+} else {
+  console.log("ℹ️ Frontend static disabled");
 }
-else {
-
-
- console.log(
-   "ℹ️ Frontend static disabled"
- );
-
-
-}
-
-
-
-
 
 /* =========================================================
    ERROR HANDLER
 ========================================================= */
-
-
-app.use(
-
-(err,req,res,next)=>{
-
-
- console.error(
-
-   "❌ Error:",
-
-   err
-
- );
-
-
-
- res.status(
-
-   err.status || 500
-
- )
- .json({
-
-   success:false,
-
-
-   error:
-
-    err.message ||
-
-    "Erreur serveur"
-
-
- });
-
-
-}
-
-);
-
-
-
-
+app.use((err, req, res, next) => {
+  console.error("❌ Error:", err);
+  res.status(err.status || 500).json({
+    success: false,
+    error: err.message || "Erreur serveur",
+  });
+});
 
 /* =========================================================
    START SERVER
 ========================================================= */
-
-
-app.listen(
-
- PORT,
-
- ()=>{
-
-
- console.log(
-   `✅ Server running on port ${PORT}`
- );
-
-
- console.log(
-   `🌱 Environment: ${NODE_ENV}`
- );
-
-
- console.log(
-   "🚀 College Emmanuel ready"
- );
-
-
-}
-
-);
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🌱 Environment: ${NODE_ENV}`);
+  console.log("🚀 College Emmanuel ready");
+});
