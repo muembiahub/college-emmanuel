@@ -90,11 +90,11 @@ app.use("/dashboard", dashboardRouter);
 ========================================================= */
 let clientPath;
 
-// En développement local
+// En développement local → build du frontend
 if (NODE_ENV === "development") {
   clientPath = path.resolve(__dirname, "../../frontend/dist");
 }
-// En production (Render)
+// En production (Render) → build généré par vite
 else {
   clientPath = path.resolve(__dirname, "../frontend/dist");
 }
@@ -104,6 +104,7 @@ if (clientPath && existsSync(clientPath)) {
 
   app.use(express.static(clientPath));
 
+  // Catch-all pour React Router
   app.get("*", (req, res, next) => {
     const indexFile = path.join(clientPath, "index.html");
     if (existsSync(indexFile)) {
