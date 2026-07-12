@@ -431,7 +431,7 @@ export default function Nouvelle() {
                 {/* Niveau */}
                 <div className="group">
                   <label className="block text-sm font-semibold text-gray-200 mb-3">
-                    Niveau *
+                    Section *
                   </label>
                   <select
                     name="niveau_id"
@@ -452,7 +452,7 @@ export default function Nouvelle() {
                 {/* Section */}
                 <div className="group">
                   <label className="block text-sm font-semibold text-gray-200 mb-3">
-                    Section *
+                    Option *
                   </label>
                   <select
                     name="section_id"
