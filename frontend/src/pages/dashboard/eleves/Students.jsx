@@ -98,7 +98,7 @@ export default function ListEleves() {
       }
     };
 
-    return statusMap[statut?.toLowerCase()] || statusMap["en attente"];
+    return statusMap[statut?.toLowerCase()] || statusMap["accepté"];
   };
 
   // Fonction pour formater la date
