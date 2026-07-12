@@ -29,7 +29,7 @@ const navigation = [
     icon: MdHome,
   },
   {
-    label: "Filières",
+    label: "Section",
     path: "/programmes",
     icon: MdSchool,
   },
