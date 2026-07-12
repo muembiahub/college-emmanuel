@@ -88,23 +88,19 @@ app.use("/dashboard", dashboardRouter);
 /* =========================================================
    FRONTEND HANDLING
 ========================================================= */
-let clientPath = null;
+let clientPath;
 
-// Développement local
+// En développement local
 if (NODE_ENV === "development") {
   clientPath = path.resolve(__dirname, "../../frontend/dist");
 }
-// Electron
-else if (process.resourcesPath) {
-  clientPath = path.join(process.resourcesPath, "frontend");
-}
-// Production (Render)
+// En production (Render)
 else {
   clientPath = path.resolve(__dirname, "../frontend/dist");
 }
 
 if (clientPath && existsSync(clientPath)) {
-  console.log("Frontend path:", clientPath);
+  console.log("✅ Frontend path:", clientPath);
 
   app.use(express.static(clientPath));
 
