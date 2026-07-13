@@ -1,114 +1,91 @@
 import express from "express";
 
 import {
-  inscrireEleve,
-  listerEleves,
-  listerNiveaux,
+  /* ===========================
+     DASHBOARD
+  =========================== */
+  afficherDashboard,
+
+  /* ===========================
+     STRUCTURE SCOLAIRE
+  =========================== */
   listerSections,
+  listerOptions,
   listerClasses,
   listerParalleles,
+
+  /* ===========================
+     INSCRIPTIONS
+  =========================== */
+  inscrireEleve,
+  listerEleves,
+
+  /* ===========================
+     NOTIFICATIONS
+  =========================== */
   listerNotifications,
   lireNotification,
   lireToutesNotifications,
-  afficherDashboard
+
 } from "../controllers/scolaireController.js";
-
-
 
 const router = express.Router();
 
-
-
-
-/* ======================================================
+/* ==========================================================
    DASHBOARD
-====================================================== */
+========================================================== */
 
+router.get("/homepage", afficherDashboard);
 
-router.get(
-  "/homepage",
-  afficherDashboard
-);
+/* ==========================================================
+   STRUCTURE SCOLAIRE
+========================================================== */
 
+// Toutes les sections
+router.get("/sections", listerSections);
 
+// Toutes les options d'une section
+// GET /dashboard/options?section_id=UUID
+router.get("/options", listerOptions);
 
+// Toutes les classes d'une option
+// GET /dashboard/classes?option_id=UUID
+router.get("/classes", listerClasses);
 
-/* ======================================================
+// Tous les parallèles d'une classe
+// GET /dashboard/paralleles?classe_id=UUID
+router.get("/paralleles", listerParalleles);
+
+/* ==========================================================
+   INSCRIPTIONS
+========================================================== */
+
+// Nouvelle inscription
+router.post("/inscription", inscrireEleve);
+
+// Liste complète des inscriptions
+router.get("/inscriptions", inscrireEleve);
+
+// Liste complète des élèves
+router.get("/eleves", listerEleves);
+
+/* ==========================================================
    NOTIFICATIONS
-====================================================== */
+========================================================== */
 
+// Toutes les notifications
+router.get("/notifications", listerNotifications);
 
-router.get(
-  "/notifications",
-  listerNotifications
-);
-
-
+// Marquer une notification comme lue
 router.put(
-  "/notification/:id/read",
+  "/notifications/:id/read",
   lireNotification
 );
 
-
+// Marquer toutes les notifications comme lues
 router.put(
   "/notifications/read-all",
   lireToutesNotifications
 );
-
-
-
-
-
-/* ======================================================
-   INSCRIPTIONS / ELEVES
-====================================================== */
-
-
-router.post(
-  "/inscription",
-  inscrireEleve
-);
-
-
-router.get(
-  "/eleves",
-  listerEleves
-);
-
-
-
-
-
-
-/* ======================================================
-   STRUCTURE SCOLAIRE
-====================================================== */
-
-
-router.get(
-  "/niveaux",
-  listerNiveaux
-);
-
-
-router.get(
-  "/sections",
-  listerSections
-);
-
-
-router.get(
-  "/classes",
-  listerClasses
-);
-
-
-router.get(
-  "/paralleles",
-  listerParalleles
-);
-
-
-
 
 export default router;

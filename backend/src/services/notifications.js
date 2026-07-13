@@ -1,31 +1,55 @@
 import { createNotification } from "../models/scolaireModel.js";
-/**
- * Crée une notification
- */
+
+/* ==========================================================
+   CREATION GENERIQUE D'UNE NOTIFICATION
+========================================================== */
 
 export const notify = async ({
+  destinataire_id = null,
+  type_destinataire = "admin",
   type,
   titre,
   message,
   reference_id = null,
 }) => {
   try {
-    await createNotification({
+    if (!type) {
+      throw new Error("Le type de notification est obligatoire.");
+    }
+
+    if (!titre) {
+      throw new Error("Le titre de notification est obligatoire.");
+    }
+
+    if (!message) {
+      throw new Error("Le message de notification est obligatoire.");
+    }
+
+    const notification = await createNotification({
+      destinataire_id,
+      type_destinataire,
       type,
       titre,
       message,
       reference_id,
     });
+
+    console.log("✅ Notification créée :", notification.notification_id);
+
+    return notification;
+
   } catch (error) {
-    console.error("Erreur Notification :", error.message);
+    console.error("❌ Erreur Notification :", error.message);
+    throw error;
   }
 };
 
-/**
- * Notification d'une nouvelle inscription
- */
+/* ==========================================================
+   NOUVELLE INSCRIPTION
+========================================================== */
+
 export const notifyInscription = async (eleve) => {
-  await notify({
+  return notify({
     type: "inscription",
     titre: "Nouvelle inscription",
     message: `${eleve.nom} ${eleve.post_nom} ${eleve.prenom} a été inscrit avec succès.`,
@@ -33,35 +57,38 @@ export const notifyInscription = async (eleve) => {
   });
 };
 
-/**
- * Notification d'un paiement
- */
+/* ==========================================================
+   PAIEMENT
+========================================================== */
+
 export const notifyPaiement = async (paiement) => {
-  await notify({
+  return notify({
     type: "paiement",
     titre: "Paiement reçu",
-    message: `Le paiement de ${paiement.montant} $ a été enregistré.`,
+    message: `Le paiement de ${paiement.montant}$ a été enregistré.`,
     reference_id: paiement.paiement_id,
   });
 };
 
-/**
- * Notification d'un nouvel enseignant
- */
+/* ==========================================================
+   PERSONNEL
+========================================================== */
+
 export const notifyPersonnel = async (personnel) => {
-  await notify({
+  return notify({
     type: "personnel",
     titre: "Nouveau membre du personnel",
-    message: `${personnel.nom} ${personnel.post_nom} a été ajouté au personnel.`,
+    message: `${personnel.nom} ${personnel.post_nom} a rejoint le personnel.`,
     reference_id: personnel.personnel_id,
   });
 };
 
-/**
- * Notification d'une nouvelle année scolaire
- */
+/* ==========================================================
+   ANNEE SCOLAIRE
+========================================================== */
+
 export const notifyAnneeScolaire = async (annee) => {
-  await notify({
+  return notify({
     type: "annee",
     titre: "Nouvelle année scolaire",
     message: `L'année scolaire ${annee.libelle} a été créée.`,
@@ -69,14 +96,41 @@ export const notifyAnneeScolaire = async (annee) => {
   });
 };
 
-/**
- * Notification d'une nouvelle classe
- */
+/* ==========================================================
+   CLASSE
+========================================================== */
+
 export const notifyClasse = async (classe) => {
-  await notify({
+  return notify({
     type: "classe",
     titre: "Nouvelle classe",
-    message: `La classe ${classe.nom} a été ajoutée.`,
+    message: `La classe ${classe.nom_classe} a été créée.`,
     reference_id: classe.classe_id,
+  });
+};
+
+/* ==========================================================
+   ABSENCE
+========================================================== */
+
+export const notifyAbsence = async (eleve) => {
+  return notify({
+    type: "absence",
+    titre: "Nouvelle absence",
+    message: `${eleve.nom} ${eleve.post_nom} est marqué absent.`,
+    reference_id: eleve.eleve_id,
+  });
+};
+
+/* ==========================================================
+   BULLETIN
+========================================================== */
+
+export const notifyBulletin = async (eleve) => {
+  return notify({
+    type: "bulletin",
+    titre: "Bulletin disponible",
+    message: `Le bulletin de ${eleve.nom} ${eleve.post_nom} est disponible.`,
+    reference_id: eleve.eleve_id,
   });
 };

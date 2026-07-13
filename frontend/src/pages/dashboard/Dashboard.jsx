@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -12,141 +11,202 @@ import {
   FileText,
   Bell,
   UserPlus,
-  CreditCard
+  CreditCard,
+  Loader2
 } from "lucide-react";
 
 import { useAuth } from "../../hooks/UseAuth";
 import NotificationBell from "../../components/NotificationBell";
+import StudentsByClassChart from "./StudentsByClassChart";
+
+// Card component for displaying statistics
+const StatCard = ({ title, value, icon: Icon, colorClass, linkTo }) => (
+  <Link
+    to={linkTo || "#"}
+    className={`
+      bg-white
+      rounded-xl
+      shadow-sm
+      border border-slate-200
+      p-5
+      flex
+      justify-between
+      items-center
+      hover:shadow-md
+      hover:border-indigo-300
+      transition-all
+      duration-200
+      group
+    `}
+  >
+    <div>
+      <p className="
+        text-xs
+        uppercase
+        text-slate-500
+        font-semibold
+        group-hover:text-indigo-600
+        transition-colors
+      ">
+        {title}
+      </p>
+      <h2 className="
+        text-3xl
+        font-bold
+        text-slate-800
+        mt-2
+      ">
+        {value}
+      </h2>
+    </div>
+    <div className={`
+      p-3
+      rounded-xl
+      ${colorClass}
+      group-hover:scale-105
+      transition-transform
+    `}>
+      <Icon size={26} />
+    </div>
+  </Link>
+);
+
+// Notification Item component
+const NotificationItem = ({ title, message, date }) => (
+  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 hover:bg-slate-100 transition-colors">
+    <p className="font-medium text-sm text-slate-800">{title}</p>
+    <p className="text-xs text-slate-500 mt-1">{message}</p>
+    {date && <p className="text-xs text-slate-400 mt-1">{new Date(date).toLocaleDateString("fr-FR")}</p>}
+  </div>
+);
+
+// Recent Student Item component
+const RecentStudentItem = ({ nom, prenom, nom_classe, photo }) => (
+  <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-3 border border-slate-100 hover:bg-slate-100 transition-colors">
+    {photo ? (
+      <img src={photo} alt={`${prenom} ${nom}`} className="w-8 h-8 rounded-full object-cover" />
+    ) : (
+      <div className="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700 text-sm font-semibold">
+        {prenom[0]}{nom[0]}
+      </div>
+    )}
+    <div>
+      <p className="font-medium text-sm text-slate-800">{prenom} {nom}</p>
+      <p className="text-xs text-slate-500">{nom_classe}</p>
+    </div>
+  </div>
+);
 
 export default function Dashboard() {
-
   const { user } = useAuth();
 
-  const [dashboard, setDashboard] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-
   useEffect(() => {
-
-    async function fetchDashboard(){
-
+    async function fetchDashboard() {
       try {
-
         const response = await fetch(
           "/dashboard/homepage",
           {
-            credentials:"include"
+            credentials: "include"
           }
         );
 
-
-        if(!response.ok){
-          throw new Error(
-            "Impossible de charger le dashboard"
-          );
+        if (!response.ok) {
+          throw new Error("Impossible de charger le tableau de bord.");
         }
 
-
         const data = await response.json();
-
-        setDashboard(data);
-
-
-      } catch(err){
-
-        console.error(err);
+        setDashboardData(data);
+      } catch (err) {
+        console.error("Erreur lors du chargement du tableau de bord:", err);
         setError(err.message);
-
       } finally {
-
         setLoading(false);
-
       }
-
     }
-
 
     fetchDashboard();
+  }, []);
 
-
-  },[]);
-
-
-
-  if(loading){
-
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-
-        <div className="text-slate-500">
-          Chargement du tableau de bord...
-        </div>
-
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <p className="ml-3 text-slate-600">Chargement du tableau de bord...</p>
       </div>
     );
-
   }
 
-
-
-  if(error){
-
+  if (error) {
     return (
-
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-
-        <div className="bg-white p-6 rounded-xl shadow text-red-600">
+        <div className="bg-white p-6 rounded-xl shadow text-red-600 border border-red-200">
+          <AlertCircle className="inline-block mr-2" />
           {error}
         </div>
-
       </div>
-
     );
-
   }
 
-
-
   const stats = [
-
     {
-      title:"Élèves",
-      value:dashboard?.stats?.studentsCount ?? 0,
-      icon:Users,
-      color:"bg-blue-50 text-blue-600"
+      title: "Élèves",
+      value: dashboardData?.stats?.studentsCount ?? 0,
+      icon: Users,
+      colorClass: "bg-blue-50 text-blue-600",
+      linkTo: "/dashboard/eleves"
     },
-
-
     {
-      title:"Enseignants",
-      value:dashboard?.stats?.teachersCount ?? 0,
-      icon:GraduationCap,
-      color:"bg-green-50 text-green-600"
+      title: "Enseignants",
+      value: dashboardData?.stats?.teachersCount ?? 0,
+      icon: GraduationCap,
+      colorClass: "bg-green-50 text-green-600",
+      linkTo: "/dashboard/enseignants"
     },
-
-
     {
-      title:"Classes",
-      value:dashboard?.stats?.classesCount ?? 0,
-      icon:School,
-      color:"bg-purple-50 text-purple-600"
+      title: "Classes",
+      value: dashboardData?.stats?.classesCount ?? 0,
+      icon: School,
+      colorClass: "bg-purple-50 text-purple-600",
+      linkTo: "/dashboard/classes"
     },
-
-
     {
-      title:"Absences aujourd'hui",
-      value:dashboard?.stats?.absencesCount ?? 0,
-      icon:CalendarX,
-      color:"bg-red-50 text-red-600"
-    }
-
+      title: "Absences",
+      value: dashboardData?.stats?.absencesCount ?? 0,
+      icon: CalendarX,
+      colorClass: "bg-red-50 text-red-600",
+      linkTo: "/dashboard/absences"
+    },
   ];
 
-
+  const quickActions = [
+    {
+      title: "Nouvelle Inscription",
+      icon: UserPlus,
+      link: "/dashboard/inscriptions/nouvelle",
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-50",
+    },
+    {
+      title: "Gérer les Paiements",
+      icon: CreditCard,
+      link: "/dashboard/paiements",
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+    },
+    {
+      title: "Voir les Rapports",
+      icon: FileText,
+      link: "/dashboard/rapports",
+      color: "text-orange-600",
+      bgColor: "bg-orange-50",
+    },
+  ];
 
   return (
-
     <div className="
       min-h-screen
       bg-slate-50
@@ -154,10 +214,7 @@ export default function Dashboard() {
       sm:p-6
       lg:p-8
     ">
-
-
       {/* HEADER */}
-
       <div className="
         flex
         flex-col
@@ -166,44 +223,27 @@ export default function Dashboard() {
         gap-4
         mb-8
       ">
-
-
         <div>
-
           <h1 className="
             text-3xl
             font-bold
             text-slate-900
           ">
-
             Bonjour {user?.prenom || "Administrateur"}
-
           </h1>
-
-
           <p className="text-slate-500 mt-2">
-
             Tableau de bord du Collège Emmanuel
-
           </p>
-
-
         </div>
-
-
-
         <div className="
           flex
           items-center
           gap-3
         ">
-
-          <NotificationBell/>
-
-
+          <NotificationBell />
           <div className="
             bg-white
-            border
+            border border-slate-200
             rounded-xl
             px-4
             py-2
@@ -211,37 +251,22 @@ export default function Dashboard() {
             items-center
             gap-2
           ">
-
-            <Calendar size={16}/>
-
-            <span className="text-sm">
-
+            <Calendar size={16} className="text-slate-500" />
+            <span className="text-sm text-slate-700">
               {new Date().toLocaleDateString(
                 "fr-FR",
                 {
-                  weekday:"long",
-                  day:"numeric",
-                  month:"long"
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long"
                 }
               )}
-
             </span>
-
           </div>
-
-
         </div>
-
-
       </div>
 
-
-
-
-
       {/* STATISTIQUES */}
-
-
       <div className="
         grid
         grid-cols-1
@@ -250,88 +275,52 @@ export default function Dashboard() {
         gap-5
         mb-8
       ">
-
-
-        {
-          stats.map((item)=>{
-
-            const Icon=item.icon;
-
-
-            return (
-
-              <div
-                key={item.title}
-                className="
-                  bg-white
-                  rounded-xl
-                  shadow-sm
-                  border
-                  p-5
-                  flex
-                  justify-between
-                  items-center
-                  hover:shadow-md
-                  transition
-                "
-              >
-
-
-                <div>
-
-                  <p className="
-                    text-xs
-                    uppercase
-                    text-slate-500
-                    font-semibold
-                  ">
-
-                    {item.title}
-
-                  </p>
-
-
-                  <h2 className="
-                    text-3xl
-                    font-bold
-                    mt-2
-                  ">
-
-                    {item.value}
-
-                  </h2>
-
-
-                </div>
-
-
-
-                <div className={`
-                  p-4
-                  rounded-xl
-                  ${item.color}
-                `}>
-
-                  <Icon size={26}/>
-
-                </div>
-
-
-              </div>
-
-
-            )
-
-          })
-
-        }
-
-
+        {stats.map((item) => (
+          <StatCard
+            key={item.title}
+            title={item.title}
+            value={item.value}
+            icon={item.icon}
+            colorClass={item.colorClass}
+            linkTo={item.linkTo}
+          />
+        ))}
       </div>
 
-
-
-
+      {/* QUICK ACTIONS */}
+      <div className="mb-8">
+        <h3 className="text-xl font-bold text-slate-800 mb-4">Actions Rapides</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {quickActions.map((action) => (
+            <Link
+              key={action.title}
+              to={action.link}
+              className={`
+                ${action.bgColor}
+                ${action.color}
+                rounded-xl
+                p-5
+                flex
+                flex-col
+                items-center
+                justify-center
+                gap-3
+                text-center
+                font-semibold
+                hover:shadow-md
+                hover:scale-105
+                transition-all
+                duration-200
+                border border-transparent
+                hover:border-current
+              `}
+            >
+              <action.icon size={32} />
+              <span>{action.title}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
 
       <div className="
         grid
@@ -339,294 +328,89 @@ export default function Dashboard() {
         lg:grid-cols-3
         gap-6
       ">
+        {/* STUDENTS BY CLASS CHART */}
+        <div className="lg:col-span-2">
+          {dashboardData?.stats?.studentsByClass ? (
+            <StudentsByClassChart
+              data={dashboardData.stats.studentsByClass}
+            />
+          ) : (
+            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
+              <p className="text-slate-500">Chargement des statistiques de répartition...</p>
+            </div>
+          )}
+        </div>
 
-
-
-        {/* PERFORMANCE */}
-
-
-        <section className="
-          bg-white
-          rounded-xl
-          border
-          p-6
-          lg:col-span-2
-        ">
-
-
-          <div className="
-            flex
-            justify-between
-            mb-5
-          ">
-
-
-            <h2 className="
-              font-bold
-              flex
-              items-center
-              gap-2
-            ">
-
-              <TrendingUp size={20}
-              className="text-indigo-600"/>
-
-              Performances générales
-
-            </h2>
-
-
-
-            <Link
-              to="/dashboard/reports"
-              className="
-              text-indigo-600
-              text-sm
-              flex
-              items-center
-              gap-1
-              "
-            >
-
-              Rapports
-              <ArrowUpRight size={14}/>
-
-            </Link>
-
-
-          </div>
-
-
-
-
-          <div className="
-            h-48
-            bg-indigo-50
-            rounded-xl
-            flex
-            items-center
-            justify-center
-            text-slate-400
-          ">
-
-            <FileText size={40}/>
-
-            <span className="ml-3">
-              Graphique des performances
-            </span>
-
-          </div>
-
-
-
-
-          <div className="
-            grid
-            sm:grid-cols-3
-            gap-3
-            mt-6
-          ">
-
-
-            <Link
-              to="/dashboard/inscriptions"
-              className="
-              bg-indigo-600
-              text-white
-              rounded-lg
-              p-3
-              text-center
-              "
-            >
-
-              <UserPlus size={18}
-              className="inline mr-2"/>
-
-              Inscription
-
-            </Link>
-
-
-
-            <Link
-              to="/dashboard/paiements"
-              className="
-              bg-green-600
-              text-white
-              rounded-lg
-              p-3
-              text-center
-              "
-            >
-
-              <CreditCard size={18}
-              className="inline mr-2"/>
-
-              Paiement
-
-            </Link>
-
-
-
-            <Link
-              to="/dashboard/personnel"
-              className="
-              bg-slate-200
-              rounded-lg
-              p-3
-              text-center
-              "
-            >
-
-              Personnel
-
-            </Link>
-
-
-          </div>
-
-
-        </section>
-
-
-
-
-
-        {/* DROITE */}
-
-
+        {/* ASIDE - NOTIFICATIONS & RECENT STUDENTS */}
         <aside className="
           bg-white
           rounded-xl
-          border
+          border border-slate-200
           p-6
+          space-y-8
         ">
-
-
-          <h3 className="
-            font-bold
-            mb-4
-            flex
-            items-center
-            gap-2
-          ">
-
-            <Bell size={18}/>
-
-            Notifications
-
-          </h3>
-
-
-
-          <div className="space-y-3">
-
-
-          {
-            dashboard?.notifications?.length ?
-
-            dashboard.notifications
-            .slice(0,5)
-            .map((n)=>(
-
-              <div
-              key={n.notification_id}
-              className="
-              bg-slate-50
-              rounded-lg
-              p-3
-              "
-              >
-
-                <p className="font-medium text-sm">
-
-                  {n.titre}
-
-                </p>
-
-
-                <p className="text-xs text-slate-500">
-
-                  {n.message}
-
-                </p>
-
-
-              </div>
-
-
-            ))
-
-            :
-
-            <p className="text-sm text-slate-400">
-              Aucune notification
-            </p>
-
-          }
-
-
+          <div>
+            <h3 className="
+              font-bold
+              text-lg
+              mb-4
+              flex
+              items-center
+              gap-2
+              text-slate-800
+            ">
+              <Bell size={18} className="text-indigo-500" />
+              Notifications Récentes
+            </h3>
+            <div className="space-y-3">
+              {dashboardData?.notifications?.length ? (
+                dashboardData.notifications
+                  .slice(0, 5)
+                  .map((n) => (
+                    <NotificationItem
+                      key={n.notification_id}
+                      title={n.titre || "Notification"}
+                      message={n.message}
+                      date={n.created_at}
+                    />
+                  ))
+              ) : (
+                <p className="text-sm text-slate-500">Aucune notification récente.</p>
+              )}
+            </div>
           </div>
 
-
-
-
-          <h3 className="
-            font-bold
-            mt-6
-            mb-3
-          ">
-
-            Derniers élèves
-
-          </h3>
-
-
-
-          {
-            dashboard?.recentStudents?.map(student=>(
-
-              <div
-              key={student.id}
-              className="
-              bg-slate-50
-              rounded-lg
-              p-3
-              mb-2
-              "
-              >
-
-                <p className="font-medium">
-
-                  {student.firstname} {student.lastname}
-
-                </p>
-
-
-                <p className="text-xs text-slate-500">
-
-                  {student.class_name}
-
-                </p>
-
-
-              </div>
-
-
-            ))
-          }
-
-
-
+          <div>
+            <h3 className="
+              font-bold
+              text-lg
+              mb-4
+              flex
+              items-center
+              gap-2
+              text-slate-800
+            ">
+              <TrendingUp size={18} className="text-green-500" />
+              Derniers Élèves Inscrits
+            </h3>
+            <div className="space-y-3">
+              {dashboardData?.recentStudents?.length ? (
+                dashboardData.recentStudents.map((student) => (
+                  <RecentStudentItem
+                    key={student.eleve_id}
+                    nom={student.nom}
+                    prenom={student.prenom}
+                    nom_classe={student.nom_classe}
+                    photo={student.photo}
+                  />
+                ))
+              ) : (
+                <p className="text-sm text-slate-500">Aucun élève inscrit récemment.</p>
+              )}
+            </div>
+          </div>
         </aside>
-
-
-
       </div>
-
-
     </div>
-
   );
-
 }
