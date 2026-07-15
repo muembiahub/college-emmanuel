@@ -9,6 +9,8 @@ import {
   getParalleles,
   createInscription,
   getEleves,
+  deleteInscriptionComplete,
+  updateEleve
 } from "../models/scolaireModel.js";
 
 import { notifyInscription } from "../services/notifications.js";
@@ -333,5 +335,76 @@ export const listerEleves = async (req, res) => {
     res.status(500).json({
       error: "Erreur serveur.",
     });
+  }
+};
+
+/* ==========================================================
+   SUPPRIMER UN ELEVE
+========================================================== */
+
+export const supprimerEleve = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: "Identifiant de l'élève manquant.",
+      });
+    }
+
+    const result = await deleteInscriptionComplete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+
+  } catch (error) {
+
+    console.error("ERREUR SUPPRESSION ELEVE :", error);
+
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+
+  }
+};
+
+/* ==========================================================
+   MODIFIER UN ELEVE
+========================================================== */
+
+export const modifierEleve = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const formData = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: "Identifiant de l'élève manquant.",
+      });
+    }
+
+    const eleve = await updateEleve(id, formData);
+
+    return res.status(200).json({
+      success: true,
+      message: "Élève modifié avec succès.",
+      eleve,
+    });
+
+  } catch (error) {
+
+    console.error("ERREUR MODIFICATION ELEVE :", error);
+
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+
   }
 };

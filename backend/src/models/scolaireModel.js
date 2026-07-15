@@ -358,6 +358,194 @@ export const getEleves = async () => {
 };
 
 /* ==========================================================
+   SUPPRIMER UNE INSCRIPTION COMPLETE
+========================================================== */
+
+export const deleteInscriptionComplete = async (eleveId) => {
+  /* ==========================================
+     1. Récupérer les informations
+  ========================================== */
+
+  const { data: inscription, error: inscriptionError } = await supabase
+    .from("inscriptions")
+    .select("inscription_id,parent_id")
+    .eq("eleve_id", eleveId)
+    .single();
+
+  if (inscriptionError) throw inscriptionError;
+
+  /* ==========================================
+     2. Supprimer les notifications
+  ========================================== */
+
+  const { error: notificationError } = await supabase
+    .from("notifications")
+    .delete()
+    .eq("reference_id", eleveId);
+
+  if (notificationError) throw notificationError;
+
+  /* ==========================================
+     3. Supprimer l'inscription
+  ========================================== */
+
+  const { error: deleteInscriptionError } = await supabase
+    .from("inscriptions")
+    .delete()
+    .eq("eleve_id", eleveId);
+
+  if (deleteInscriptionError) throw deleteInscriptionError;
+
+  /* ==========================================
+     4. Supprimer l'élève
+  ========================================== */
+
+  const { error: deleteEleveError } = await supabase
+    .from("eleves")
+    .delete()
+    .eq("eleve_id", eleveId);
+
+  if (deleteEleveError) throw deleteEleveError;
+
+  /* ==========================================
+     5. Vérifier si le parent possède
+        encore d'autres enfants
+  ========================================== */
+
+  const { count, error: countError } = await supabase
+    .from("inscriptions")
+    .select("*", {
+      count: "exact",
+      head: true,
+    })
+    .eq("parent_id", inscription.parent_id);
+
+  if (countError) throw countError;
+
+  /* ==========================================
+     6. Supprimer le parent
+        uniquement s'il n'a plus d'enfant
+  ========================================== */
+
+  if (count === 0) {
+    const { error: parentError } = await supabase
+      .from("parents")
+      .delete()
+      .eq("parent_id", inscription.parent_id);
+
+    if (parentError) throw parentError;
+  }
+
+  return {
+    success: true,
+    message: "Élève supprimé avec succès.",
+  };
+};
+
+/* ==========================================================
+   MODIFIER UN ELEVE
+========================================================== */
+
+export const updateEleve = async (id, eleveData) => {
+  /* ==========================================
+     1. Mise à jour de l'élève
+  ========================================== */
+
+  const {
+    data: eleve,
+    error: eleveError,
+  } = await supabase
+    .from("eleves")
+    .update({
+      matricule: eleveData.matricule,
+      nom: eleveData.nom,
+      post_nom: eleveData.post_nom,
+      prenom: eleveData.prenom,
+      sexe: eleveData.sexe,
+      date_naissance: eleveData.date_naissance,
+      lieu_naissance: eleveData.lieu_naissance,
+      nationalite: eleveData.nationalite,
+      numero_national: eleveData.numero_national,
+      telephone: eleveData.telephone,
+      email: eleveData.email,
+      adresse: eleveData.adresse,
+      photo: eleveData.photo,
+      statut: eleveData.statut_eleve,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("eleve_id", id)
+    .select()
+    .single();
+
+  if (eleveError) throw eleveError;
+
+  /* ==========================================
+     2. Mise à jour du parent
+  ========================================== */
+
+  if (eleveData.parent_id) {
+    const { error: parentError } = await supabase
+      .from("parents")
+      .update({
+        nom_pere: eleveData.nom_pere,
+        numero_telephone_du_pere:
+          eleveData.numero_telephone_du_pere,
+        fonction_du_pere:
+          eleveData.fonction_du_pere,
+
+        nom_mere: eleveData.nom_mere,
+        numero_telephone_de_la_mere:
+          eleveData.numero_telephone_de_la_mere,
+        fonction_de_la_mere:
+          eleveData.fonction_de_la_mere,
+
+        numero_whatsapp:
+          eleveData.numero_whatsapp,
+        email:
+          eleveData.email_parent,
+        adresse:
+          eleveData.adresse_parent,
+        profession:
+          eleveData.profession,
+
+        updated_at: new Date().toISOString(),
+      })
+      .eq("parent_id", eleveData.parent_id);
+
+    if (parentError) throw parentError;
+  }
+
+  /* ==========================================
+     3. Mise à jour de l'inscription
+  ========================================== */
+
+  if (eleveData.inscription_id) {
+    const { error: inscriptionError } = await supabase
+      .from("inscriptions")
+      .update({
+        section_id: eleveData.section_id,
+        option_id: eleveData.option_id,
+        classe_id: eleveData.classe_id,
+        parallele_id: eleveData.parallele_id,
+        annee_scolaire: eleveData.annee_scolaire,
+        statut: eleveData.statut_inscription,
+        montant_paye: eleveData.montant_paye,
+        observations: eleveData.observations,
+        updated_at: new Date().toISOString(),
+      })
+      .eq(
+        "inscription_id",
+        eleveData.inscription_id
+      );
+
+    if (inscriptionError) throw inscriptionError;
+  }
+
+  return eleve;
+};
+
+
+/* ==========================================================
    NOTIFICATIONS
 ========================================================== */
 

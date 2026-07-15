@@ -157,7 +157,7 @@ export default function Dashboard() {
       value: dashboardData?.stats?.studentsCount ?? 0,
       icon: Users,
       colorClass: "bg-blue-50 text-blue-600",
-      linkTo: "/dashboard/eleves"
+      linkTo: "/dashboard/students"
     },
     {
       title: "Enseignants",

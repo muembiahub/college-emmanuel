@@ -19,6 +19,8 @@ import {
   =========================== */
   inscrireEleve,
   listerEleves,
+  supprimerEleve,
+  modifierEleve,
 
   /* ===========================
      NOTIFICATIONS
@@ -68,6 +70,9 @@ router.get("/inscriptions", inscrireEleve);
 
 // Liste complète des élèves
 router.get("/eleves", listerEleves);
+router.delete("/eleves/:id", supprimerEleve);
+// Modifier un élève
+router.put("/eleves/:id", modifierEleve);
 
 /* ==========================================================
    NOTIFICATIONS
