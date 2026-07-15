@@ -8,6 +8,8 @@ import {
   Users,
   Calendar,
   FileText,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 import { useNotification } from "../context/NotificationContext";
@@ -18,6 +20,11 @@ const typeIcons = {
   personnel: Users,
   annee: Calendar,
   classe: FileText,
+  absence: Calendar,
+  bulletin: FileText,
+
+  modification: Pencil,
+  suppression: Trash2,
 };
 
 function formatRelativeTime(dateString) {

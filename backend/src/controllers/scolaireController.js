@@ -9,11 +9,17 @@ import {
   getParalleles,
   createInscription,
   getEleves,
+  getEleveById,
   deleteInscriptionComplete,
   updateEleve
 } from "../models/scolaireModel.js";
 
-import { notifyInscription } from "../services/notifications.js";
+import {
+  notifyInscription,
+  notifyModificationEleve,
+  notifySuppressionEleve,
+} from "../services/notifications.js";
+
 /* ==========================================================
    DASHBOARD
 ========================================================== */
@@ -353,7 +359,14 @@ export const supprimerEleve = async (req, res) => {
       });
     }
 
+    // Récupérer les informations de l'élève
+    const eleve = await getEleveById(id);
+
+    // Supprimer toutes les données liées
     const result = await deleteInscriptionComplete(id);
+
+    // Créer la notification
+    await notifySuppressionEleve(eleve);
 
     return res.status(200).json({
       success: true,
@@ -390,6 +403,7 @@ export const modifierEleve = async (req, res) => {
     }
 
     const eleve = await updateEleve(id, formData);
+    await notifyModificationEleve(eleve);
 
     return res.status(200).json({
       success: true,

@@ -443,6 +443,25 @@ export const deleteInscriptionComplete = async (eleveId) => {
 };
 
 /* ==========================================================
+   RECUPERER UN ELEVE PAR ID
+========================================================== */
+
+export const getEleveById = async (eleveId) => {
+  const { data, error } = await supabase
+    .from("vue_eleves_complet")
+    .select("*")
+    .eq("eleve_id", eleveId)
+    .single();
+
+  if (error) {
+    console.error("Erreur récupération élève :", error);
+    throw error;
+  }
+
+  return data;
+};
+
+/* ==========================================================
    MODIFIER UN ELEVE
 ========================================================== */
 
@@ -554,7 +573,7 @@ export const updateEleve = async (id, eleveData) => {
  */
 export const createNotification = async ({
   destinataire_id = null,
-  type_destinataire = "admin",
+  type_destinataire = "Admin",
   type,
   titre,
   message,

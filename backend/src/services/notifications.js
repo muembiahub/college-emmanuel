@@ -6,7 +6,7 @@ import { createNotification } from "../models/scolaireModel.js";
 
 export const notify = async ({
   destinataire_id = null,
-  type_destinataire = "admin",
+  type_destinataire = "Admin",
   type,
   titre,
   message,
@@ -131,6 +131,37 @@ export const notifyBulletin = async (eleve) => {
     type: "bulletin",
     titre: "Bulletin disponible",
     message: `Le bulletin de ${eleve.nom} ${eleve.post_nom} est disponible.`,
+    reference_id: eleve.eleve_id,
+  });
+};
+
+
+// ===================================================================
+//  Mofication et supprimer 
+// ===================================================================
+
+/* ==========================================================
+   MODIFICATION D'UN ELEVE
+========================================================== */
+
+export const notifyModificationEleve = async (eleve) => {
+  return notify({
+    type: "modification",
+    titre: "Élève modifié",
+    message: `${eleve.nom} ${eleve.post_nom} ${eleve.prenom} a été modifié avec succès.`,
+    reference_id: eleve.eleve_id,
+  });
+};
+
+/* ==========================================================
+   SUPPRESSION D'UN ELEVE
+========================================================== */
+
+export const notifySuppressionEleve = async (eleve) => {
+  return notify({
+    type: "suppression",
+    titre: "Élève supprimé",
+    message: `${eleve.nom} ${eleve.post_nom} ${eleve.prenom} a été supprimé.`,
     reference_id: eleve.eleve_id,
   });
 };

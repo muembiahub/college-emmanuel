@@ -16,6 +16,7 @@ import {
   Phone,
   Loader2
 } from "lucide-react";
+ import toast from "react-hot-toast";
 import ActionMenu from "../../../components/action/ActionMenu";
 import EditStudentModal from "../../../components/modal/EditStudentModal";
 import DeleteStudentModal from "../../../components/modal/DeleteStudentModal";
@@ -58,32 +59,47 @@ export default function ListEleves() {
   setEditOpen(true);
 };
 
-  const handleSave = async (student) => {
-    try {
-      const response = await fetch(
-        `/dashboard/eleves/${student.eleve_id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(student),
-        }
-      );
+ 
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la mise à jour de l'élève.");
+const handleSave = async (student) => {
+  try {
+    const response = await fetch(
+      `/dashboard/eleves/${student.eleve_id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(student),
       }
+    );
 
-      setEditOpen(false);
-      fetchEleves(); // Refresh the list
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour de l'élève:", error);
-      alert(error.message);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "Erreur lors de la mise à jour de l'élève."
+      );
     }
-  };
+
+    toast.success(
+      data.message || "Élève modifié avec succès."
+    );
+
+    setEditOpen(false);
+    setSelectedStudent(null);
+
+    await fetchEleves();
+
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      error.message || "Une erreur est survenue."
+    );
+  }
+};
 
   const handleDelete = (student) => {
     setSelectedStudent(student);
