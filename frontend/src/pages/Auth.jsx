@@ -114,7 +114,7 @@ export default function Login() {
 
   return (
 
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 px-5">
+    <div className="min-h-screen flex items-center justify-center  px-5">
 
 
       <div className="grid lg:grid-cols-2 max-w-5xl w-full bg-white rounded-[2rem] shadow-xl overflow-hidden">

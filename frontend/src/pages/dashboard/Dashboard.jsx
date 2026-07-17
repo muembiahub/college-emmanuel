@@ -24,7 +24,6 @@ const StatCard = ({ title, value, icon: Icon, colorClass, linkTo }) => (
   <Link
     to={linkTo || "#"}
     className={`
-      bg-white
       rounded-xl
       shadow-sm
       border border-slate-200
@@ -43,7 +42,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass, linkTo }) => (
       <p className="
         text-xs
         uppercase
-        text-slate-500
+        text-green-500
         font-semibold
         group-hover:text-indigo-600
         transition-colors
@@ -133,7 +132,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
         <p className="ml-3 text-slate-600">Chargement du tableau de bord...</p>
       </div>
@@ -209,7 +208,6 @@ export default function Dashboard() {
   return (
     <div className="
       min-h-screen
-      bg-slate-50
       p-4
       sm:p-6
       lg:p-8
@@ -274,6 +272,8 @@ export default function Dashboard() {
         lg:grid-cols-4
         gap-5
         mb-8
+        font-bold
+        text-slate-50
       ">
         {stats.map((item) => (
           <StatCard
@@ -289,7 +289,7 @@ export default function Dashboard() {
 
       {/* QUICK ACTIONS */}
       <div className="mb-8">
-        <h3 className="text-xl font-bold text-slate-800 mb-4">Actions Rapides</h3>
+        <h3 className="text-3xl font-bold text-red-50 mb-4">Actions Rapides</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {quickActions.map((action) => (
             <Link

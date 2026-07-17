@@ -295,7 +295,7 @@ export default function Home() {
           ) : (
             niveaux.map((filiere) => (
               <div key={filiere.filiere_id} className="group overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm hover:shadow-xl transition">
-                <div className="h-44 overflow-hidden bg-slate-100">
+                <div className="h-44 overflow-hidden ">
                   <img src={filiere.logo} alt={filiere.name} className="h-full w-full object-cover group-hover:scale-105 transition" />
                 </div>
                 <div className="p-5">

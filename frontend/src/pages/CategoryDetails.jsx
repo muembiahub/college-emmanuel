@@ -135,7 +135,7 @@ export default function CategoryDetails() {
                     className="mb-4 h-48 w-full rounded-lg object-cover"
                   />
                 ) : (
-                  <div className="mb-4 h-48 w-full rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 font-medium text-sm border border-gray-100">
+                  <div className="mb-4 h-48 w-full rounded-lg  flex items-center justify-center text-slate-400 font-medium text-sm border border-gray-100">
                     Image non disponible
                   </div>
                 )}
