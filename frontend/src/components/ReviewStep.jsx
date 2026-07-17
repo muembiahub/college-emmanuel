@@ -21,7 +21,7 @@ export default function ReviewStep({
   const SummarySection = ({ title, icon: Icon, children }) => (
     <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4">
       <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-        <Icon className="w-5 h-5 text-indigo-400" />
+        <Icon className="w-5 h-5 text-green-400" />
         <h4 className="text-lg font-bold text-white">
           {title}
         </h4>

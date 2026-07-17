@@ -171,7 +171,7 @@ const handleSave = async (student) => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-6 md:p-8">
+      <div className="min-h-screen  p-6 md:p-8">
         {/* Background decorative elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
