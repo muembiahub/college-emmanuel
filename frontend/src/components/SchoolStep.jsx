@@ -9,6 +9,7 @@ export default function SchoolStep({
   options,
   classes,
   paralleles,
+  annees,
 }) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
@@ -86,13 +87,17 @@ export default function SchoolStep({
         />
 
         {/* Année scolaire */}
-        <FormInput
+            <FormSelect
           label="Année scolaire"
-          name="annee_scolaire"
-          value={formData.annee_scolaire}
+          name="annee_id"
+          value={formData.annee_id}
           onChange={handleChange}
           required
-          placeholder="Ex: 2026-2027"
+          placeholder="Choisir une année scolaire"
+          options={annees.map((annee) => ({
+            id: annee.annee_id,
+            label: annee.libelle,
+          }))}
         />
       </div>
     </div>

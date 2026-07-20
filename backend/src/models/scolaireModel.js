@@ -1,4 +1,5 @@
 import { supabase } from "../config/database.js";
+import { genererObligationsFinancieres } from "./financeModel.js";
 
 /* ==========================================================
    DASHBOARD
@@ -214,7 +215,7 @@ export const createInscription = async (
     !inscriptionData.section_id ||
     !inscriptionData.classe_id ||
     !inscriptionData.parallele_id ||
-    !inscriptionData.annee_scolaire
+    !inscriptionData.annee_id
   ) {
     throw new Error(
       "Les informations obligatoires de l'inscription sont manquantes."
@@ -230,18 +231,12 @@ export const createInscription = async (
     .insert([
       {
         ...parentData,
-        fonction_du_pere:
-          parentData.fonction_du_pere || "Non spécifié",
-        fonction_de_la_mere:
-          parentData.fonction_de_la_mere || "Non spécifié",
-        numero_whatsapp:
-          parentData.numero_whatsapp || "",
-        email:
-          parentData.email || "",
-        adresse:
-          parentData.adresse || "",
-        profession:
-          parentData.profession || "",
+        fonction_du_pere: parentData.fonction_du_pere || "Non spécifié",
+        fonction_de_la_mere: parentData.fonction_de_la_mere || "Non spécifié",
+        numero_whatsapp: parentData.numero_whatsapp || "",
+        email: parentData.email || "",
+        adresse: parentData.adresse || "",
+        profession: parentData.profession || "",
       },
     ])
     .select()
@@ -258,18 +253,12 @@ export const createInscription = async (
     .insert([
       {
         ...eleveData,
-        lieu_naissance:
-          eleveData.lieu_naissance || "Non spécifié",
-        nationalite:
-          eleveData.nationalite || "Non spécifié",
-        telephone:
-          eleveData.telephone || "",
-        email:
-          eleveData.email || "",
-        adresse:
-          eleveData.adresse || "",
-        statut:
-          eleveData.statut || "Active",
+        lieu_naissance: eleveData.lieu_naissance || "Non spécifié",
+        nationalite: eleveData.nationalite || "Non spécifié",
+        telephone: eleveData.telephone || "",
+        email: eleveData.email || "",
+        adresse: eleveData.adresse || "",
+        statut: eleveData.statut || "Active",
         date_admission:
           eleveData.date_admission ||
           new Date().toISOString().split("T")[0],
@@ -284,55 +273,53 @@ export const createInscription = async (
      CREATION DE L'INSCRIPTION
   ===================================================== */
 
-  const { data: inscription, error: inscriptionError } =
-    await supabase
-      .from("inscriptions")
-      .insert([
-        {
-          numero_inscription:
-            inscriptionData.numero_inscription,
+  const { data: inscription, error: inscriptionError } = await supabase
+    .from("inscriptions")
+    .insert([
+      {
+        numero_inscription: inscriptionData.numero_inscription,
 
-          eleve_id:
-            eleve.eleve_id,
+        eleve_id: eleve.eleve_id,
 
-          parent_id:
-            parent.parent_id,
+        parent_id: parent.parent_id,
 
-          section_id:
-            inscriptionData.section_id,
+        section_id: inscriptionData.section_id,
 
-          option_id:
-            inscriptionData.option_id || null,
+        option_id: inscriptionData.option_id || null,
 
-          classe_id:
-            inscriptionData.classe_id,
+        classe_id: inscriptionData.classe_id,
 
-          parallele_id:
-            inscriptionData.parallele_id,
+        parallele_id: inscriptionData.parallele_id,
 
-          annee_scolaire:
-            inscriptionData.annee_scolaire,
+        // ✅ Correction
+        annee_id: inscriptionData.annee_id,
 
-          date_inscription:
-            inscriptionData.date_inscription ||
-            new Date()
-              .toISOString()
-              .split("T")[0],
+        date_inscription:
+          inscriptionData.date_inscription ||
+          new Date().toISOString().split("T")[0],
 
-          statut:
-            inscriptionData.statut || "Active",
+        statut: inscriptionData.statut || "Acceptée",
 
-          montant_paye:
-            inscriptionData.montant_paye || 0,
+        type_inscription:
+          inscriptionData.type_inscription || "Nouvelle",
 
-          observations:
-            inscriptionData.observations || "",
-        },
-      ])
-      .select()
-      .single();
+        observations: inscriptionData.observations || "",
+      },
+    ])
+    .select()
+    .single();
 
   if (inscriptionError) throw inscriptionError;
+
+  /* =====================================================
+     GENERATION DES OBLIGATIONS FINANCIERES
+  ===================================================== */
+
+  await genererObligationsFinancieres(inscription, eleve);
+
+  /* =====================================================
+     RETOUR
+  ===================================================== */
 
   return {
     parent,

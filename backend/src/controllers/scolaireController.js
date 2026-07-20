@@ -182,7 +182,6 @@ export const inscrireEleve = async (req, res) => {
       sexe: formData.sexe,
       date_naissance: formData.date_naissance,
       lieu_naissance: formData.lieu_naissance,
-
       nationalite: formData.nationalite || "Congolaise",
 
       numero_national: formData.numero_national,
@@ -226,14 +225,12 @@ export const inscrireEleve = async (req, res) => {
 
     const inscriptionData = {
       section_id: formData.section_id,
-
       option_id: formData.option_id || null,
-
       classe_id: formData.classe_id,
-
       parallele_id: formData.parallele_id,
 
-      annee_scolaire: formData.annee_scolaire,
+      // ✅ UUID de l'année scolaire
+      annee_id: formData.annee_id,
 
       numero_inscription:
         formData.numero_inscription ||
@@ -245,9 +242,7 @@ export const inscrireEleve = async (req, res) => {
         formData.date_inscription ||
         new Date().toISOString().split("T")[0],
 
-      statut: formData.statut_inscription || "Active",
-
-      montant_paye: Number(formData.montant_paye || 0),
+      statut: formData.statut_inscription || "Accepte",
 
       type_inscription:
         formData.type_inscription || "Nouvelle",
@@ -265,10 +260,22 @@ export const inscrireEleve = async (req, res) => {
       [eleveData.prenom, "Prénom de l'élève"],
       [eleveData.sexe, "Sexe"],
       [eleveData.date_naissance, "Date de naissance"],
+
+      [parentData.nom_pere, "Nom du père"],
+      [
+        parentData.numero_telephone_du_pere,
+        "Téléphone du père",
+      ],
+      [parentData.nom_mere, "Nom de la mère"],
+      [
+        parentData.numero_telephone_de_la_mere,
+        "Téléphone de la mère",
+      ],
+
       [inscriptionData.section_id, "Section"],
       [inscriptionData.classe_id, "Classe"],
       [inscriptionData.parallele_id, "Parallèle"],
-      [inscriptionData.annee_scolaire, "Année scolaire"],
+      [inscriptionData.annee_id, "Année scolaire"],
       [inscriptionData.type_inscription, "Type d'inscription"],
     ];
 
@@ -276,7 +283,7 @@ export const inscrireEleve = async (req, res) => {
       if (!value || value.toString().trim() === "") {
         return res.status(400).json({
           success: false,
-          error: `${label} est obligatoire.`,
+          message: `${label} est obligatoire.`,
         });
       }
     }
@@ -306,15 +313,15 @@ export const inscrireEleve = async (req, res) => {
     }
 
     /* ==========================================================
-       REPONSE
+       RÉPONSE
     ========================================================== */
 
     return res.status(201).json({
       success: true,
-      message: "Élève inscrit avec succès.",
+      message:
+        "Élève inscrit et obligations financières générées avec succès.",
       data: result,
     });
-
   } catch (error) {
     console.error("ERREUR INSCRIPTION :", error);
 

@@ -23,7 +23,8 @@ import {
   FileText,
   RotateCcw,
   Menu,
-  X
+  X,
+  HomeIcon
 } from "lucide-react";
 
 import { useAuth } from "../hooks/UseAuth";
@@ -91,8 +92,10 @@ export default function DashboardMenu() {
       badge: badges?.finances || 0,
       color: "from-yellow-500 to-orange-600",
       submenu: [
+        { name: "Homepage", path: "/dashboard/finances/homepage", icon:HomeIcon },
+        { name: "Paiements-eleves", path: "/dashboard/finances/paiements-eleves", icon: Sparkles },
+        { name: "Paiements-employes", path: "/dashboard/finances/paiements-elmployes", icon: Sparkles },
         { name: "Dépenses", path: "/dashboard/finances/depenses", icon: FileText },
-        { name: "Paiement", path: "/dashboard/finances/payement", icon: CreditCard },
         { name: "Rapports", path: "/dashboard/finances/rapports", icon: BarChart3 },
         { name: "Historique", path: "/dashboard/finances/historique", icon: Calendar }
       ],

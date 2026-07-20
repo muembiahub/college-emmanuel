@@ -65,8 +65,7 @@ router.get("/paralleles", listerParalleles);
 // Nouvelle inscription
 router.post("/inscription", inscrireEleve);
 
-// Liste complète des inscriptions
-router.get("/inscriptions", inscrireEleve);
+
 
 // Liste complète des élèves
 router.get("/eleves", listerEleves);

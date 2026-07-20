@@ -190,9 +190,9 @@ export default function Dashboard() {
       bgColor: "bg-indigo-50",
     },
     {
-      title: "Gérer les Paiements",
+      title: "Gérer les Finances",
       icon: CreditCard,
-      link: "/dashboard/paiements",
+      link: "/dashboard/finances/paiements",
       color: "text-green-600",
       bgColor: "bg-green-50",
     },

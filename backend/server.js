@@ -11,6 +11,7 @@ import { existsSync } from "fs";
 import apiRoutes from "./src/routes/api.js";
 import authRouter from "./src/routes/apiAuthRoutes.js";
 import dashboardRouter from "./src/routes/scolaireRoutes.js";
+import financeRoutes from "./src/routes/financeRoutes.js";
 
 /* =========================================================
    ENV
@@ -84,6 +85,7 @@ if (NODE_ENV === "development") {
 app.use("/api", apiRoutes);
 app.use("/", authRouter);
 app.use("/dashboard", dashboardRouter);
+app.use("/finance", financeRoutes);
 
 /* =========================================================
    FRONTEND HANDLING

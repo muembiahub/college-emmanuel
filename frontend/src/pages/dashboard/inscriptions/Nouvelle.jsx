@@ -7,6 +7,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 // Components
 import Stepper from "../../../components/Stepper";
@@ -24,6 +25,7 @@ export default function Nouvelle() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   /* ==========================
       Structure scolaire
@@ -33,6 +35,7 @@ export default function Nouvelle() {
   const [options, setOptions] = useState([]);
   const [classes, setClasses] = useState([]);
   const [paralleles, setParalleles] = useState([]);
+  const [annees, setAnnees] = useState([]);
 
   /* ==========================
       Formulaire
@@ -65,7 +68,7 @@ export default function Nouvelle() {
     classe_id: "",
     parallele_id: "",
 
-    annee_scolaire: "",
+    annee_id: "",
   };
 
   const [formData, setFormData] = useState(initialForm);
@@ -76,6 +79,7 @@ export default function Nouvelle() {
 
   useEffect(() => {
     loadSections();
+    loadAnnees();
   }, []);
 
   async function loadSections() {
@@ -181,6 +185,42 @@ async function loadParalleles(classeId) {
 }
 
 /* ==========================================================
+   GESTION DES CHANGEMENTS ANNEE SCOLAIRE
+========================================================== */
+
+
+
+async function loadAnnees() {
+  try {
+    setError(null);
+
+    const res = await fetch("/finance/annees");
+
+    const result = await res.json();
+    if (!res.ok) {
+      throw new Error(
+        result.message || "Impossible de charger les années."
+      );
+    }
+
+    if (!result.success) {
+      throw new Error(
+        result.message || "Erreur lors du chargement des années."
+      );
+    }
+
+    setAnnees(result.data || []);
+
+  } catch (err) {
+    console.error("❌ Erreur loadAnnees :", err);
+    setAnnees([]);
+    setError(err.message);
+  }
+}
+
+
+
+/* ==========================================================
    GESTION DES CHANGEMENTS
 ========================================================== */
 
@@ -237,7 +277,6 @@ async function handleChange(e) {
   }
 
   if (name === "parallele_id") {
-    console.log("PARALLELE SELECTIONNÉ :", value);
 
     setFormData((prev) => ({
       ...prev,
@@ -274,7 +313,7 @@ async function handleSubmit(e) {
     ========================================== */
     const requiredFields = [
       "nom", "post_nom", "prenom", "sexe", "date_naissance",
-      "section_id", "classe_id", "parallele_id", "annee_scolaire"
+      "section_id", "classe_id", "parallele_id", "annee_id"
     ];
 
     for (let field of requiredFields) {
@@ -318,18 +357,18 @@ async function handleSubmit(e) {
     /* ==========================================
        Inscription
     ========================================== */
-    const inscriptionData = {
-      section_id: formData.section_id,
-      option_id: formData.option_id || null,
-      classe_id: formData.classe_id,
-      parallele_id: formData.parallele_id,
-      annee_scolaire: formData.annee_scolaire,
-      numero_inscription: `INS-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,
-      date_inscription: formData.date_inscription || new Date().toISOString().split("T")[0],
-      statut: "Active",
-      montant_paye: 0,
-      type_inscription: "Nouvelle",
-    };
+   const inscriptionData = {
+  section_id: formData.section_id,
+  option_id: formData.option_id ?? null,
+  classe_id: formData.classe_id ?? null,
+  parallele_id: formData.parallele_id ?? null,
+  annee_id: formData.annee_id ?? null,
+  numero_inscription: formData.numero_inscription || `INS-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+  date_inscription: (formData.date_inscription && typeof formData.date_inscription === 'string' && formData.date_inscription.includes('T')) ?
+  formData.date_inscription.split("T")[0] : new Date().toISOString().split("T")[0],
+  statut: "Active",
+  type_inscription: "Nouvelle"
+};
 
     /* ==========================================
        Préparation du Payload pour le Backend
@@ -343,12 +382,13 @@ async function handleSubmit(e) {
 
     console.log("===== DONNÉES ENVOYÉES AU SERVER =====", payloadComplet);
 
+    console.log(formData);
     const response = await fetch("/dashboard/inscription", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json" 
       },
-      body: JSON.stringify(payloadComplet), // 💡 Corrigé ici : Envoi à plat
+      body: JSON.stringify(payloadComplet)
     });
 
     const result = await response.json();
@@ -357,23 +397,17 @@ async function handleSubmit(e) {
       throw new Error(result.error || result.message || "Erreur lors de l'inscription.");
     }
 
-    /* ==========================================
-       Notification
-    ========================================== */
-    toast.success(result.message || "🎉 Élève inscrit avec succès !", {
-      position: "top-right",
-      autoClose: 4000,
-      theme: "colored",
-    });
+    
+toast.success(result.message || "🎉 Élève inscrit avec succès !");
 
-    /* ==========================================
-       Réinitialisation
-    ========================================== */
-    setCurrentStep(1);
-    setFormData(initialForm);
-    setOptions([]);
-    setClasses([]);
-    setParalleles([]);
+setTimeout(() => {
+  navigate("/dashboard/students", {
+    state: {
+      refresh: true,
+      message: "Élève inscrit avec succès."
+    }
+  });
+}, 1200);
 
   } catch (err) {
     console.error("Erreur attrapée :", err);
@@ -406,6 +440,7 @@ const renderStep = () => {
           options={options}
           classes={classes}
           paralleles={paralleles}
+          annees={annees}
         />
       );
     case 4:
@@ -416,6 +451,7 @@ const renderStep = () => {
           options={options}
           classes={classes}
           paralleles={paralleles}
+          annees={annees}
         />
       );
     default:
