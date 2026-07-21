@@ -87,6 +87,13 @@ export const genererObligationsFinancieres = async (
   inscription,
   eleve
 ) => {
+  console.log("\n============================");
+  console.log("GÉNÉRATION DES OBLIGATIONS");
+  console.log("============================");
+
+  console.log("📌 Inscription :", inscription);
+  console.log("📌 Élève :", eleve);
+
   /* ==========================================================
      RECUPERATION DES FRAIS APPLICABLES
   ========================================================== */
@@ -99,9 +106,24 @@ export const genererObligationsFinancieres = async (
     .eq("classe_id", inscription.classe_id)
     .eq("actif", true);
 
-  if (error) throw error;
+  if (error) {
+    console.error("❌ Erreur récupération des frais :", error);
+    throw error;
+  }
 
-  if (!frais?.length) return [];
+  console.log("📚 Frais trouvés :", frais);
+
+  if (!frais || frais.length === 0) {
+    console.warn("⚠ Aucun frais trouvé pour cette inscription.");
+    console.log({
+      annee_id: inscription.annee_id,
+      section_id: inscription.section_id,
+      option_id: inscription.option_id,
+      classe_id: inscription.classe_id,
+    });
+
+    return [];
+  }
 
   /* ==========================================================
      FILTRAGE (OPTION + SEXE)
@@ -109,36 +131,44 @@ export const genererObligationsFinancieres = async (
 
   const fraisApplicables = frais.filter((f) => {
     const optionOk =
-      !f.option_id ||
-      f.option_id === inscription.option_id;
+      !f.option_id || f.option_id === inscription.option_id;
 
     const sexeOk =
-      f.sexe === "Tous" ||
-      f.sexe === eleve.sexe;
+      f.sexe === "Tous" || f.sexe === eleve.sexe;
 
     return optionOk && sexeOk && Number(f.montant) > 0;
   });
 
-  if (!fraisApplicables.length) return [];
+  console.log("✅ Frais applicables :", fraisApplicables);
+
+  if (fraisApplicables.length === 0) {
+    console.warn("⚠ Aucun frais applicable après filtrage.");
+    return [];
+  }
 
   /* ==========================================================
-     EVITER LES DOUBLONS
+     VERIFICATION DES DOUBLONS
   ========================================================== */
 
-  const { data: existantes, error: existError } =
-    await supabase
-      .from("obligations_financieres")
-      .select("frais_id")
-      .eq(
-        "inscription_id",
-        inscription.inscription_id
-      );
+  const { data: existantes, error: existError } = await supabase
+    .from("obligations_financieres")
+    .select("frais_id")
+    .eq("inscription_id", inscription.inscription_id);
 
-  if (existError) throw existError;
+  if (existError) {
+    console.error("❌ Erreur vérification doublons :", existError);
+    throw existError;
+  }
+
+  console.log("📄 Obligations existantes :", existantes);
 
   const dejaCrees = new Set(
-    existantes.map((o) => o.frais_id)
+    (existantes || []).map((o) => o.frais_id)
   );
+
+  /* ==========================================================
+     CONSTRUCTION DES OBLIGATIONS
+  ========================================================== */
 
   const obligations = fraisApplicables
     .filter((f) => !dejaCrees.has(f.frais_id))
@@ -152,7 +182,12 @@ export const genererObligationsFinancieres = async (
       statut: "impaye",
     }));
 
-  if (!obligations.length) return [];
+  console.log("📝 Obligations à créer :", obligations);
+
+  if (obligations.length === 0) {
+    console.warn("⚠ Toutes les obligations existent déjà.");
+    return [];
+  }
 
   /* ==========================================================
      INSERTION
@@ -163,7 +198,12 @@ export const genererObligationsFinancieres = async (
     .insert(obligations)
     .select();
 
-  if (insertError) throw insertError;
+  if (insertError) {
+    console.error("❌ Erreur insertion obligations :", insertError);
+    throw insertError;
+  }
+
+  console.log("🎉 Obligations créées :", data);
 
   return data;
 };
