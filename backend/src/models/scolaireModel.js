@@ -182,150 +182,179 @@ export const createInscription = async (
   parentData,
   inscriptionData
 ) => {
-  /* =====================================================
-     VALIDATION
-  ===================================================== */
+  try {
+    console.log("========== DEBUT INSCRIPTION ==========");
 
-  if (
-    !eleveData.nom ||
-    !eleveData.post_nom ||
-    !eleveData.prenom ||
-    !eleveData.sexe ||
-    !eleveData.date_naissance ||
-    !eleveData.lieu_naissance ||
-    !eleveData.nationalite
-  ) {
-    throw new Error(
-      "Les informations obligatoires de l'élève sont manquantes."
-    );
+    /* =====================================================
+       VALIDATION
+    ===================================================== */
+
+    if (
+      !eleveData.nom ||
+      !eleveData.post_nom ||
+      !eleveData.prenom ||
+      !eleveData.sexe ||
+      !eleveData.date_naissance ||
+      !eleveData.lieu_naissance ||
+      !eleveData.nationalite
+    ) {
+      throw new Error(
+        "Les informations obligatoires de l'élève sont manquantes."
+      );
+    }
+
+    if (
+      !parentData.nom_pere ||
+      !parentData.numero_telephone_du_pere ||
+      !parentData.nom_mere ||
+      !parentData.numero_telephone_de_la_mere
+    ) {
+      throw new Error(
+        "Les informations obligatoires des parents sont manquantes."
+      );
+    }
+
+    if (
+      !inscriptionData.section_id ||
+      !inscriptionData.classe_id ||
+      !inscriptionData.parallele_id ||
+      !inscriptionData.annee_id
+    ) {
+      throw new Error(
+        "Les informations obligatoires de l'inscription sont manquantes."
+      );
+    }
+
+    console.log("✅ Validation réussie");
+
+    /* =====================================================
+       CREATION DU PARENT
+    ===================================================== */
+
+    console.log("➡️ Création du parent...");
+
+    const { data: parent, error: parentError } = await supabase
+      .from("parents")
+      .insert([
+        {
+          ...parentData,
+          fonction_du_pere: parentData.fonction_du_pere || "Non spécifié",
+          fonction_de_la_mere: parentData.fonction_de_la_mere || "Non spécifié",
+          numero_whatsapp: parentData.numero_whatsapp || "",
+          email: parentData.email || "",
+          adresse: parentData.adresse || "",
+          profession: parentData.profession || "",
+        },
+      ])
+      .select()
+      .single();
+
+    if (parentError) throw parentError;
+
+    console.log("✅ Parent créé");
+    console.log(parent);
+
+    /* =====================================================
+       CREATION DE L'ELEVE
+    ===================================================== */
+
+    console.log("➡️ Création de l'élève...");
+
+    const { data: eleve, error: eleveError } = await supabase
+      .from("eleves")
+      .insert([
+        {
+          ...eleveData,
+          lieu_naissance: eleveData.lieu_naissance || "Non spécifié",
+          nationalite: eleveData.nationalite || "Non spécifié",
+          telephone: eleveData.telephone || "",
+          email: eleveData.email || "",
+          adresse: eleveData.adresse || "",
+          statut: eleveData.statut || "Active",
+          date_admission:
+            eleveData.date_admission ||
+            new Date().toISOString().split("T")[0],
+        },
+      ])
+      .select()
+      .single();
+
+    if (eleveError) throw eleveError;
+
+    console.log("✅ Élève créé");
+    console.log(eleve);
+
+    /* =====================================================
+       CREATION DE L'INSCRIPTION
+    ===================================================== */
+
+    console.log("➡️ Création de l'inscription...");
+
+    const { data: inscription, error: inscriptionError } = await supabase
+      .from("inscriptions")
+      .insert([
+        {
+          numero_inscription: inscriptionData.numero_inscription,
+          eleve_id: eleve.eleve_id,
+          parent_id: parent.parent_id,
+          section_id: inscriptionData.section_id,
+          option_id: inscriptionData.option_id || null,
+          classe_id: inscriptionData.classe_id,
+          parallele_id: inscriptionData.parallele_id,
+          annee_id: inscriptionData.annee_id,
+          date_inscription:
+            inscriptionData.date_inscription ||
+            new Date().toISOString().split("T")[0],
+          statut: inscriptionData.statut || "Acceptée",
+          type_inscription:
+            inscriptionData.type_inscription || "Nouvelle",
+          observations: inscriptionData.observations || "",
+        },
+      ])
+      .select()
+      .single();
+
+    if (inscriptionError) throw inscriptionError;
+
+    console.log("✅ Inscription créée");
+    console.log(inscription);
+
+    /* =====================================================
+       DONNEES UTILISEES POUR LES FRAIS
+    ===================================================== */
+
+    console.log("========== DONNEES POUR LES FRAIS ==========");
+
+    console.table({
+      annee_inscription: inscription.annee_id,
+      section_inscription: inscription.section_id,
+      classe_inscription: inscription.classe_id,
+      option_inscription: inscription.option_id,
+      sexe_eleve: eleve.sexe,
+    });
+
+    /* =====================================================
+       GENERATION DES OBLIGATIONS
+    ===================================================== */
+
+    console.log("➡️ Génération des obligations financières...");
+
+    await genererObligationsFinancieres(inscription, eleve);
+
+    console.log("✅ Génération terminée");
+
+    console.log("========== FIN INSCRIPTION ==========");
+
+    return {
+      parent,
+      eleve,
+      inscription,
+    };
+  } catch (error) {
+    console.error("❌ ERREUR createInscription");
+    console.error(error);
+    throw error;
   }
-
-  if (
-    !parentData.nom_pere ||
-    !parentData.numero_telephone_du_pere ||
-    !parentData.nom_mere ||
-    !parentData.numero_telephone_de_la_mere
-  ) {
-    throw new Error(
-      "Les informations obligatoires des parents sont manquantes."
-    );
-  }
-
-  if (
-    !inscriptionData.section_id ||
-    !inscriptionData.classe_id ||
-    !inscriptionData.parallele_id ||
-    !inscriptionData.annee_id
-  ) {
-    throw new Error(
-      "Les informations obligatoires de l'inscription sont manquantes."
-    );
-  }
-
-  /* =====================================================
-     CREATION DU PARENT
-  ===================================================== */
-
-  const { data: parent, error: parentError } = await supabase
-    .from("parents")
-    .insert([
-      {
-        ...parentData,
-        fonction_du_pere: parentData.fonction_du_pere || "Non spécifié",
-        fonction_de_la_mere: parentData.fonction_de_la_mere || "Non spécifié",
-        numero_whatsapp: parentData.numero_whatsapp || "",
-        email: parentData.email || "",
-        adresse: parentData.adresse || "",
-        profession: parentData.profession || "",
-      },
-    ])
-    .select()
-    .single();
-
-  if (parentError) throw parentError;
-
-  /* =====================================================
-     CREATION DE L'ELEVE
-  ===================================================== */
-
-  const { data: eleve, error: eleveError } = await supabase
-    .from("eleves")
-    .insert([
-      {
-        ...eleveData,
-        lieu_naissance: eleveData.lieu_naissance || "Non spécifié",
-        nationalite: eleveData.nationalite || "Non spécifié",
-        telephone: eleveData.telephone || "",
-        email: eleveData.email || "",
-        adresse: eleveData.adresse || "",
-        statut: eleveData.statut || "Active",
-        date_admission:
-          eleveData.date_admission ||
-          new Date().toISOString().split("T")[0],
-      },
-    ])
-    .select()
-    .single();
-
-  if (eleveError) throw eleveError;
-
-  /* =====================================================
-     CREATION DE L'INSCRIPTION
-  ===================================================== */
-
-  const { data: inscription, error: inscriptionError } = await supabase
-    .from("inscriptions")
-    .insert([
-      {
-        numero_inscription: inscriptionData.numero_inscription,
-
-        eleve_id: eleve.eleve_id,
-
-        parent_id: parent.parent_id,
-
-        section_id: inscriptionData.section_id,
-
-        option_id: inscriptionData.option_id || null,
-
-        classe_id: inscriptionData.classe_id,
-
-        parallele_id: inscriptionData.parallele_id,
-
-        // ✅ Correction
-        annee_id: inscriptionData.annee_id,
-
-        date_inscription:
-          inscriptionData.date_inscription ||
-          new Date().toISOString().split("T")[0],
-
-        statut: inscriptionData.statut || "Acceptée",
-
-        type_inscription:
-          inscriptionData.type_inscription || "Nouvelle",
-
-        observations: inscriptionData.observations || "",
-      },
-    ])
-    .select()
-    .single();
-
-  if (inscriptionError) throw inscriptionError;
-
-  /* =====================================================
-     GENERATION DES OBLIGATIONS FINANCIERES
-  ===================================================== */
-
-  await genererObligationsFinancieres(inscription, eleve);
-
-  /* =====================================================
-     RETOUR
-  ===================================================== */
-
-  return {
-    parent,
-    eleve,
-    inscription,
-  };
 };
 
 
