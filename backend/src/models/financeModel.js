@@ -98,13 +98,42 @@ export const genererObligationsFinancieres = async (
      RECUPERATION DES FRAIS APPLICABLES
   ========================================================== */
 
-  const { data: frais, error } = await supabase
-    .from("frais_scolaires")
-    .select("*")
-    .eq("annee_id", inscription.annee_id)
-    .eq("section_id", inscription.section_id)
-    .eq("classe_id", inscription.classe_id)
-    .eq("actif", true);
+  const { data: tousLesFrais, error } = await supabase
+  .from("frais_scolaires")
+  .select("*");
+
+if (error) throw error;
+
+console.log("TOTAL FRAIS :", tousLesFrais.length);
+
+console.log(
+  "Frais même année :",
+  tousLesFrais.filter(f => f.annee_id === inscription.annee_id).length
+);
+
+console.log(
+  "Frais même section :",
+  tousLesFrais.filter(f => f.section_id === inscription.section_id).length
+);
+
+console.log(
+  "Frais même classe :",
+  tousLesFrais.filter(f => f.classe_id === inscription.classe_id).length
+);
+
+console.log(
+  "Frais actifs :",
+  tousLesFrais.filter(f => f.actif).length
+);
+
+const frais = tousLesFrais.filter(f =>
+  f.annee_id === inscription.annee_id &&
+  f.section_id === inscription.section_id &&
+  f.classe_id === inscription.classe_id &&
+  f.actif === true
+);
+
+console.log("Frais filtrés JS :", frais);
 
   if (error) {
     console.error("❌ Erreur récupération des frais :", error);
