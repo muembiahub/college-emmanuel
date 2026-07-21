@@ -177,11 +177,47 @@ export const getParalleles = async (classe_id = null) => {
 /* ==========================================================
    INSCRIPTION
 ========================================================== */
+/**
+ * Fonction de nettoyage (Rollback)
+ * Supprime les enregistrements créés si une étape ultérieure échoue.
+ */
+export const rollbackInscription = async ({ inscriptionId, eleveId, parentId }) => {
+  console.log("⚠️ Début du rollback des données...");
+
+  try {
+    if (inscriptionId) {
+      console.log(`➡️ Suppression de l'inscription (${inscriptionId})...`);
+      await supabase.from("inscriptions").delete().eq("inscription_id", inscriptionId);
+    }
+
+    if (eleveId) {
+      console.log(`➡️ Suppression de l'élève (${eleveId})...`);
+      await supabase.from("eleves").delete().eq("eleve_id", eleveId);
+    }
+
+    if (parentId) {
+      console.log(`➡️ Suppression du parent (${parentId})...`);
+      await supabase.from("parents").delete().eq("parent_id", parentId);
+    }
+
+    console.log("✅ Rollback terminé avec succès.");
+  } catch (rollbackError) {
+    console.error("❌ Erreur critique lors du rollback :", rollbackError);
+  }
+};
+
+/**
+ * Création d'une inscription complète avec conditionnement strict sur les frais
+ */
 export const createInscription = async (
   eleveData,
   parentData,
   inscriptionData
 ) => {
+  let createdParent = null;
+  let createdEleve = null;
+  let createdInscription = null;
+
   try {
     console.log("========== DEBUT INSCRIPTION ==========");
 
@@ -250,6 +286,7 @@ export const createInscription = async (
       .single();
 
     if (parentError) throw parentError;
+    createdParent = parent;
 
     console.log("✅ Parent créé");
     console.log(parent);
@@ -280,6 +317,7 @@ export const createInscription = async (
       .single();
 
     if (eleveError) throw eleveError;
+    createdEleve = eleve;
 
     console.log("✅ Élève créé");
     console.log(eleve);
@@ -315,6 +353,7 @@ export const createInscription = async (
       .single();
 
     if (inscriptionError) throw inscriptionError;
+    createdInscription = inscription;
 
     console.log("✅ Inscription créée");
     console.log(inscription);
@@ -339,7 +378,14 @@ export const createInscription = async (
 
     console.log("➡️ Génération des obligations financières...");
 
-    await genererObligationsFinancieres(inscription, eleve);
+    const obligations = await genererObligationsFinancieres(inscription, eleve);
+
+    // 🛑 CONDITION STRICTE : Si aucune obligation n'est générée, on stoppe tout et déclenche le rollback
+    if (!obligations || obligations.length === 0) {
+      throw new Error(
+        "Échec de l'inscription : Aucun frais scolaire n'a été trouvé pour cette configuration (Année, Section, Classe, Option)."
+      );
+    }
 
     console.log("✅ Génération terminée");
 
@@ -349,10 +395,19 @@ export const createInscription = async (
       parent,
       eleve,
       inscription,
+      obligations,
     };
   } catch (error) {
     console.error("❌ ERREUR createInscription");
-    console.error(error);
+    console.error(error.message || error);
+
+    // Rollback automatique de toutes les entités créées
+    await rollbackInscription({
+      inscriptionId: createdInscription?.inscription_id,
+      eleveId: createdEleve?.eleve_id,
+      parentId: createdParent?.parent_id,
+    });
+
     throw error;
   }
 };
