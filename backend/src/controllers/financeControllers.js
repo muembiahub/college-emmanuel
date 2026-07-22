@@ -1,23 +1,39 @@
 import {
   getAnneesScolaires,
   getAnneeScolaireById,
+
   getObligationsByIds,
   updateObligationPaiement,
+  getObligationsByInscription,
+
   getDetailsPaiement,
   createDetailPaiement,
   deleteDetailPaiement,
+
   getPaiementsByInscription,
   getMontantPaye,
+
   getInscriptionByNumero,
   getInscriptionById,
+  getrechercherInscription,
+
   createPaiement,
-  getObligationsByInscription,
+
   generateNumeroRecu,
   getRecettesDuJour,
   getRecettesDuMois,
   getDerniersPaiements,
   getNombrePaiements,
-  getrechercherInscription,
+
+  getMontantEncaisse,
+  getMontantRestant,
+  getNombreObligations,
+  getNombreObligationsImpayees,
+  getNombreObligationsPartielles,
+  getNombreObligationsPayees,
+  getNombreDebiteurs,
+  getEvolutionRecettesMensuelles,
+  getRepartitionModesPaiement,
 } from "../models/financeModel.js";
 
 /* ==========================================================
@@ -744,28 +760,69 @@ export const afficherDashboardFinance = async (req, res) => {
       recettesMois,
       derniersPaiements,
       nombrePaiements,
+      montantEncaisse,
+      montantRestant,
+      nombreObligations,
+      obligationsImpayees,
+      obligationsPartielles,
+      obligationsPayees,
+      nombreDebiteurs,
+      evolutionMensuelle,
+      repartitionPaiements,
     ] = await Promise.all([
       generateNumeroRecu(),
       getRecettesDuJour(),
       getRecettesDuMois(),
-      getDerniersPaiements(),
+      getDerniersPaiements(10),
       getNombrePaiements(),
+
+      getMontantEncaisse(),
+      getMontantRestant(),
+      getNombreObligations(),
+
+      getNombreObligationsImpayees(),
+      getNombreObligationsPartielles(),
+      getNombreObligationsPayees(),
+
+      getNombreDebiteurs(),
+
+      getEvolutionRecettesMensuelles(),
+      getRepartitionModesPaiement(),
     ]);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: {
-        prochainNumeroRecu: numeroRecu,
-        recettesJour,
-        recettesMois,
+        statistiques: {
+          prochainNumeroRecu: numeroRecu,
+
+          recettesJour,
+          recettesMois,
+
+          montantEncaisse,
+          montantRestant,
+
+          nombrePaiements,
+          nombreObligations,
+          nombreDebiteurs,
+
+          obligationsImpayees,
+          obligationsPartielles,
+          obligationsPayees,
+        },
+
+        graphiques: {
+          evolutionMensuelle,
+          repartitionPaiements,
+        },
+
         derniersPaiements,
-        nombrePaiements,
       },
     });
   } catch (error) {
     console.error("Erreur dashboard finance :", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });

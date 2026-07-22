@@ -743,30 +743,53 @@ export const getRecettesDuMois = async () => {
    DERNIERS PAIEMENTS
 ========================================================== */
 
-export const getDerniersPaiements = async (
-  limit = 20
-) => {
-
-  const { data, error } = await supabase
+export const getDerniersPaiements = async() => {
+  // 1. Récupérer les derniers paiements
+  const { data: paiements, error } = await supabase
     .from("paiements")
     .select(`
       *,
-      inscriptions(
-        numero_inscription,
-        eleve_id
+      inscriptions (
+        inscription_id,
+        numero_inscription
       )
     `)
-    .order("date_paiement", {
-      ascending: false,
-    })
-    .limit(limit);
+    .eq("statut", "valide")
+    .order("date_paiement", { ascending: false });
 
   if (error) throw error;
 
-  return data;
+  if (!paiements || paiements.length === 0) {
+    return [];
+  }
 
+  // 2. Récupérer tous les IDs d'inscription
+  const inscriptionIds = paiements
+    .map((p) => p.inscriptions?.inscription_id)
+    .filter(Boolean);
+
+  // 3. Récupérer les élèves en une seule requête
+  const { data: eleves, error: elevesError } = await supabase
+    .from("vue_eleves_complet")
+    .select("inscription_id, nom, post_nom, prenom")
+    .in("inscription_id", inscriptionIds);
+
+  if (elevesError) throw elevesError;
+
+  // 4. Créer une map inscription_id -> élève
+  const elevesMap = {};
+  eleves.forEach((e) => {
+    elevesMap[e.inscription_id] =
+      `${e.nom} ${e.post_nom} ${e.prenom}`;
+  });
+
+  // 5. Fusionner les informations
+  return paiements.map((paiement) => ({
+    ...paiement,
+    eleve:
+      elevesMap[paiement.inscriptions?.inscription_id] || "-",
+  }));
 };
-
 
 /* ==========================================================
    NOMBRE DE PAIEMENTS
@@ -833,7 +856,7 @@ export const getrechercherInscription = async (q) => {
       ].join(",")
     )
     .order("nom")
-    .limit(10);
+    .limit(50);
 
   if (error) throw error;
 
@@ -875,4 +898,184 @@ export const updateObligationPaiement = async (
   if (error) throw error;
 
   return data;
+};
+
+
+
+/* ==========================================================
+   MONTANT TOTAL ENCAISSÉ
+========================================================== */
+
+export const getMontantEncaisse = async () => {
+  const { data, error } = await supabase
+    .from("paiements")
+    .select("montant_total")
+    .eq("statut", "valide");
+
+  if (error) throw error;
+
+  return (
+    data?.reduce(
+      (total, paiement) => total + Number(paiement.montant_total),
+      0
+    ) || 0
+  );
+};
+
+/* ==========================================================
+   MONTANT RESTANT À RECOUVRER
+========================================================== */
+
+export const getMontantRestant = async () => {
+  const { data, error } = await supabase
+    .from("obligations_financieres")
+    .select("reste")
+    .gt("reste", 0);
+
+  if (error) throw error;
+
+  return (
+    data?.reduce(
+      (total, obligation) => total + Number(obligation.reste),
+      0
+    ) || 0
+  );
+};
+
+/* ==========================================================
+   NOMBRE TOTAL D'OBLIGATIONS
+========================================================== */
+
+export const getNombreObligations = async () => {
+  const { count, error } = await supabase
+    .from("obligations_financieres")
+    .select("*", {
+      count: "exact",
+      head: true,
+    });
+
+  if (error) throw error;
+
+  return count ?? 0;
+};
+
+/* ==========================================================
+   OBLIGATIONS IMPAYÉES
+========================================================== */
+
+export const getNombreObligationsImpayees = async () => {
+  const { count, error } = await supabase
+    .from("obligations_financieres")
+    .select("*", {
+      count: "exact",
+      head: true,
+    })
+    .eq("statut", "impaye");
+
+  if (error) throw error;
+
+  return count ?? 0;
+};
+
+/* ==========================================================
+   OBLIGATIONS PARTIELLES
+========================================================== */
+
+export const getNombreObligationsPartielles = async () => {
+  const { count, error } = await supabase
+    .from("obligations_financieres")
+    .select("*", {
+      count: "exact",
+      head: true,
+    })
+    .eq("statut", "partiel");
+
+  if (error) throw error;
+
+  return count ?? 0;
+};
+
+/* ==========================================================
+   OBLIGATIONS PAYÉES
+========================================================== */
+
+export const getNombreObligationsPayees = async () => {
+  const { count, error } = await supabase
+    .from("obligations_financieres")
+    .select("*", {
+      count: "exact",
+      head: true,
+    })
+    .eq("statut", "paye");
+
+  if (error) throw error;
+
+  return count ?? 0;
+};
+
+/* ==========================================================
+   ÉLÈVES DÉBITEURS
+========================================================== */
+
+export const getNombreDebiteurs = async () => {
+  const { data, error } = await supabase
+    .from("obligations_financieres")
+    .select("inscription_id")
+    .gt("reste", 0);
+
+  if (error) throw error;
+
+  return new Set(data.map((o) => o.inscription_id)).size;
+};
+
+/* ==========================================================
+   ÉVOLUTION DES RECETTES PAR MOIS
+========================================================== */
+
+export const getEvolutionRecettesMensuelles = async () => {
+  const { data, error } = await supabase
+    .from("paiements")
+    .select("date_paiement,montant_total")
+    .eq("statut", "valide");
+
+  if (error) throw error;
+
+  const mois = Array.from({ length: 12 }, (_, i) => ({
+    mois: i + 1,
+    total: 0,
+  }));
+
+  data.forEach((paiement) => {
+    const index = new Date(paiement.date_paiement).getMonth();
+    mois[index].total += Number(paiement.montant_total);
+  });
+
+  return mois;
+};
+
+/* ==========================================================
+   RÉPARTITION PAR MODE DE PAIEMENT
+========================================================== */
+
+export const getRepartitionModesPaiement = async () => {
+  const { data, error } = await supabase
+    .from("paiements")
+    .select("mode_paiement,montant_total")
+    .eq("statut", "valide");
+
+  if (error) throw error;
+
+  const repartition = {};
+
+  data.forEach((paiement) => {
+    const mode = paiement.mode_paiement || "Autre";
+
+    repartition[mode] =
+      (repartition[mode] || 0) + Number(paiement.montant_total);
+  });
+
+  return Object.entries(repartition).map(([mode, montant]) => ({
+    mode,
+    montant,
+  }));
 };
