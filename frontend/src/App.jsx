@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound.jsx";
 
 import Dashboard from "./pages/dashboard/Dashboard.jsx";
 import Profile from "./pages/dashboard/Profile.jsx";
+import Notifications from "./pages/dashboard/Notifications.jsx";
 import Notes from "./pages/dashboard/Notes.jsx";
 import Settings from "./pages/dashboard/Settings.jsx";
 
@@ -35,14 +36,14 @@ import Settings from "./pages/dashboard/Settings.jsx";
    Inscriptions
 =========================== */
 
-import Inscription from "./pages/dashboard/inscriptions/Inscription.jsx";
+import Reinscription from "./pages/dashboard/inscriptions/Reinscription.jsx";
 import Nouvelle from "./pages/dashboard/inscriptions/Nouvelle.jsx";
 import Students from "./pages/dashboard/eleves/Students.jsx";
 
 /* ===========================
    Classes
 =========================== */
-
+import ClassesOverview from "./pages/dashboard/classes/ClassesOverview.jsx";
 import Maternelle from "./pages/dashboard/classes/Maternelle.jsx";
 import Primaire from "./pages/dashboard/classes/Primaire.jsx";
 import Secondaire from "./pages/dashboard/classes/Secondaire.jsx";
@@ -56,7 +57,6 @@ import Depenses from "./pages/dashboard/finances/Depenses.jsx";
 import Homepage from "./pages/dashboard/finances/FinancesHomepage.jsx";
 import PaiementsEleves from "./pages/dashboard/finances/PaiementsEleves.jsx";
 import FacturePaiement from "./pages/dashboard/finances/FacturePaiement.jsx";
-import HistoriqueFinance from "./pages/dashboard/finances/Historique.jsx";
 import PaiementFicheEleves from "./pages/dashboard/finances/PaiementFicheEleves.jsx";
 
 /* ===========================
@@ -177,16 +177,21 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardLayout />}>
 
               <Route index element={<Dashboard />} />
-              <Route path="profile" element={<Profile />} />
+              <Route path="profiles" element={<Profile />} />
+              <Route
+                path="notifications"
+                element={<Notifications />}/>
+              <Route path="notes" element={<Notes />} />
+              <Route path="settings" element={<Settings />} />
 
               {/* Inscriptions */}
 
-              <Route path="inscriptions" element={<Inscription />} />
+              <Route path="inscriptions/reinscription" element={<Reinscription />} />
               <Route path="inscriptions/nouvelle" element={<Nouvelle />} />
               <Route path="students" element={<Students />} />
 
               {/* Classes */}
-
+              <Route path="classes" element={<ClassesOverview />} />
               <Route path="classes/maternelle" element={<Maternelle />} />
               <Route path="classes/primaire" element={<Primaire />} />
               <Route path="classes/secondaire" element={<Secondaire />} />
@@ -199,7 +204,7 @@ export default function App() {
               <Route path="finances/paiements-eleves" element={<PaiementsEleves />} />
               <Route path="finances/factureseleves" element= {<FacturePaiement/>} />
               <Route path="finances/paiementficheeleves" element={<PaiementFicheEleves />} />
-              <Route path="finances/historique" element={<HistoriqueFinance />} />
+              <Route path="finances/rapports" element={<RapportsFinance />} />
 
               {/* Personnel */}
 
@@ -230,8 +235,7 @@ export default function App() {
               <Route path="calendar/holidays" element={<Holidays />} />
               <Route path="calendar/exams" element={<Exams />} />
 
-              <Route path="notes" element={<Notes />} />
-              <Route path="settings" element={<Settings />} />
+              
 
             </Route>
           </Route>

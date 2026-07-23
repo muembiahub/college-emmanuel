@@ -10,7 +10,7 @@ export default function StepNavigation({
   isLastStep,
 }) {
   return (
-    <div className="flex justify-between items-center pt-8 border-t border-white/10 mt-10">
+    <div className="flex justify-between items-center pt-8 border-t border-slate-800/80 mt-10">
       
       {/* Bouton précédent */}
       <button
@@ -21,7 +21,7 @@ export default function StepNavigation({
           flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300
           ${currentStep === 1
             ? "opacity-0 pointer-events-none"
-            : "text-gray-300 hover:bg-white/5 hover:text-white border border-white/10"}
+            : "text-slate-200 hover:bg-slate-900/80 hover:text-white border border-slate-700/80 bg-slate-950/40"}
         `}
       >
         <ChevronLeft className="w-5 h-5" />
@@ -29,8 +29,8 @@ export default function StepNavigation({
       </button>
 
       {/* Indicateur d'étape */}
-      <div className="text-sm text-gray-400">
-        Étape {currentStep} / {totalSteps}
+      <div className="text-sm font-semibold text-slate-300">
+        Étape <span className="text-white">{currentStep}</span> / {totalSteps}
       </div>
 
       {/* Bouton suivant ou confirmer */}
@@ -38,7 +38,7 @@ export default function StepNavigation({
         type={isLastStep ? "submit" : "button"}
         onClick={isLastStep ? undefined : onNext}
         disabled={loading}
-        className="group relative px-8 py-3 rounded-xl font-semibold text-white transition-all duration-300 overflow-hidden"
+        className="group relative px-8 py-3 rounded-xl font-semibold text-white transition-all duration-300 overflow-hidden shadow-xl"
       >
         {/* Fond animé */}
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 group-hover:shadow-lg group-hover:shadow-purple-500/50"></div>

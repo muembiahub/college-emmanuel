@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
 } from "react";
 
 const NotificationContext = createContext();
@@ -15,36 +16,36 @@ export function NotificationProvider({ children }) {
      CHARGER LES NOTIFICATIONS
   ========================================================== */
 
-  const chargerNotifications = async () => {
+  const chargerNotifications = useCallback(async () => {
     try {
-      const response = await fetch(
-        "/dashboard/notifications",
-        {
-          credentials: "include",
-        }
-      );
+      const response = await fetch("/dashboard/notifications", {
+        credentials: "include",
+      });
 
+      // 1. Si la réponse n'est pas OK (ex: 401 Unauthenticated ou 404 Not Found)
       if (!response.ok) {
-        throw new Error(
-          "Impossible de charger les notifications."
-        );
+        console.warn(`Erreur HTTP lors du chargement : ${response.status}`);
+        return;
+      }
+
+      // 2. Vérification que la réponse est bien du JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("Le serveur renvoie du HTML au lieu de JSON.");
+        return;
       }
 
       const data = await response.json();
-
       setNotifications(data ?? []);
     } catch (error) {
-      console.error(
-        "Erreur notifications :",
-        error
-      );
+      console.error("Erreur notifications :", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   /* ==========================================================
-     INITIALISATION
+     INITIALISATION & POLLING (5s)
   ========================================================== */
 
   useEffect(() => {
@@ -55,95 +56,105 @@ export function NotificationProvider({ children }) {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [chargerNotifications]);
 
   /* ==========================================================
-     MARQUER UNE NOTIFICATION
+     MARQUER UNE NOTIFICATION COMME LUE
   ========================================================== */
 
   const markAsRead = async (id) => {
-    try {
-      await fetch(
-        `/dashboard/notifications/${id}/read`,
-        {
-          method: "PUT",
-          credentials: "include",
-        }
-      );
+    // Mise à jour optimiste (immédiate sur l'interface)
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification.notification_id === id
+          ? { ...notification, lue: true }
+          : notification
+      )
+    );
 
-      setNotifications((prev) =>
-        prev.map((notification) =>
-          notification.notification_id === id
-            ? {
-                ...notification,
-                lue: true,
-              }
-            : notification
-        )
-      );
+    try {
+      const response = await fetch(`/dashboard/notifications/${id}/read`, {
+        method: "PUT",
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Échec du marquage serveur.");
     } catch (error) {
-      console.error(error);
+      console.error("Erreur marquage notification :", error);
+      // En cas d'erreur, resynchronisation avec la base de données
+      chargerNotifications();
     }
   };
 
   /* ==========================================================
-     TOUT LIRE
+     SUPPRIMER / EFFACER UNE NOTIFICATION
+  ========================================================== */
+
+  const deleteNotification = async (id) => {
+    // Suppression optimiste
+    setNotifications((prev) =>
+      prev.filter((notification) => notification.notification_id !== id)
+    );
+
+    try {
+      const response = await fetch(`/dashboard/notifications/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Échec de la suppression serveur.");
+    } catch (error) {
+      console.error("Erreur suppression notification :", error);
+      chargerNotifications();
+    }
+  };
+
+  /* ==========================================================
+     TOUT MARQUER COMME LU
   ========================================================== */
 
   const markAllRead = async () => {
-    try {
-      await fetch(
-        "/dashboard/notifications/read-all",
-        {
-          method: "PUT",
-          credentials: "include",
-        }
-      );
+    // Mise à jour optimiste
+    setNotifications((prev) =>
+      prev.map((notification) => ({ ...notification, lue: true }))
+    );
 
-      setNotifications((prev) =>
-        prev.map((notification) => ({
-          ...notification,
-          lue: true,
-        }))
-      );
+    try {
+      const response = await fetch("/dashboard/notifications/read-all", {
+        method: "PUT",
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Échec du marquage global.");
     } catch (error) {
-      console.error(error);
+      console.error("Erreur marquage global :", error);
+      chargerNotifications();
     }
   };
 
   /* ==========================================================
-     BADGES
+     BADGES & COMPTEURS
   ========================================================== */
 
   const badges = {
     inscriptions: notifications.filter(
-      (n) =>
-        n.type === "inscription" &&
-        !n.lue
+      (n) => n.type === "inscription" && !n.lue
     ).length,
 
     finances: notifications.filter(
-      (n) =>
-        n.type === "paiement" &&
-        !n.lue
+      (n) => n.type === "paiement" && !n.lue
     ).length,
 
     personnel: notifications.filter(
-      (n) =>
-        n.type === "personnel" &&
-        !n.lue
+      (n) => n.type === "personnel" && !n.lue
     ).length,
 
     classe: notifications.filter(
-      (n) =>
-        n.type === "classe" &&
-        !n.lue
+      (n) => n.type === "classe" && !n.lue
     ).length,
   };
 
-  const unreadCount = notifications.filter(
-    (n) => !n.lue
-  ).length;
+  const unreadCount = notifications.filter((n) => !n.lue).length;
 
   return (
     <NotificationContext.Provider
@@ -154,6 +165,7 @@ export function NotificationProvider({ children }) {
         badges,
         chargerNotifications,
         markAsRead,
+        deleteNotification,
         markAllRead,
       }}
     >

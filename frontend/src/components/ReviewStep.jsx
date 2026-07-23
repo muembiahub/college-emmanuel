@@ -19,34 +19,36 @@ export default function ReviewStep({
   };
 
   const SummarySection = ({ title, icon: Icon, children }) => (
-    <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4">
-      <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-        <Icon className="w-5 h-5 text-green-400" />
-        <h4 className="text-lg font-bold text-white">
+    <div className="backdrop-blur-xl bg-slate-950/40 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
+      <div className="flex items-center gap-3 border-b border-slate-800/80 pb-4">
+        <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center shadow-lg shadow-indigo-500/10">
+          <Icon className="w-5 h-5 text-indigo-400" />
+        </div>
+        <h4 className="text-xl font-bold tracking-tight text-white">
           {title}
         </h4>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {children}
       </div>
     </div>
   );
 
   const DataItem = ({ label, value }) => (
-    <div>
-      <p className="text-sm text-gray-400">
+    <div className="space-y-1">
+      <p className="text-xs uppercase tracking-wider text-slate-400 font-medium">
         {label}
       </p>
 
-      <p className="text-white font-medium">
+      <p className="text-white font-semibold text-base">
         {value || "—"}
       </p>
     </div>
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 text-slate-100">
 
       {/* ============================
           Informations Élève
@@ -58,7 +60,7 @@ export default function ReviewStep({
       >
         <DataItem
           label="Nom complet"
-          value={`${formData.nom} ${formData.post_nom} ${formData.prenom}`}
+          value={`${formData.nom || ""} ${formData.post_nom || ""} ${formData.prenom || ""}`}
         />
 
         <DataItem
@@ -92,8 +94,8 @@ export default function ReviewStep({
         />
 
         <DataItem
-          label="Adresse"
-          value={formData.adresse}
+          label="Adresse de l'élève"
+          value={formData.eleve_adresse}
         />
       </SummarySection>
 

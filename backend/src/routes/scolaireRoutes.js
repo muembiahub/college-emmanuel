@@ -29,6 +29,8 @@ import {
   lireNotification,
   lireToutesNotifications,
 
+  supprimerNotification,
+
 } from "../controllers/scolaireController.js";
 
 const router = express.Router();
@@ -77,19 +79,12 @@ router.put("/eleves/:id", modifierEleve);
    NOTIFICATIONS
 ========================================================== */
 
-// Toutes les notifications
+
+
+
 router.get("/notifications", listerNotifications);
-
-// Marquer une notification comme lue
-router.put(
-  "/notifications/:id/read",
-  lireNotification
-);
-
-// Marquer toutes les notifications comme lues
-router.put(
-  "/notifications/read-all",
-  lireToutesNotifications
-);
+router.put("/notifications/read-all", lireToutesNotifications);
+router.put("/notifications/:id/read", lireNotification);
+router.delete("/notifications/:id", supprimerNotification); 
 
 export default router;

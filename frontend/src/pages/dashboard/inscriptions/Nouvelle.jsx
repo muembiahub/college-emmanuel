@@ -325,18 +325,18 @@ async function handleSubmit(e) {
     /* ==========================================
        Élève
     ========================================== */
-    const eleveData = {
-      nom: formData.nom,
-      post_nom: formData.post_nom,
-      prenom: formData.prenom,
-      sexe: formData.sexe,
-      date_naissance: formData.date_naissance,
-      lieu_naissance: formData.lieu_naissance,
-      nationalite: formData.nationalite,
-      telephone: formData.telephone,
-      email: formData.email,
-      adresse: formData.adresse,
-    };
+   const eleveData = {
+  nom: formData.nom,
+  post_nom: formData.post_nom,
+  prenom: formData.prenom,
+  sexe: formData.sexe,
+  date_naissance: formData.date_naissance,
+  lieu_naissance: formData.lieu_naissance,
+  nationalite: formData.nationalite,
+  telephone: formData.telephone,
+  email: formData.email,
+  adresse: formData.adresse,
+};
 
     /* ==========================================
        Parent
@@ -350,7 +350,7 @@ async function handleSubmit(e) {
       fonction_de_la_mere: formData.fonction_de_la_mere,
       numero_whatsapp: formData.numero_whatsapp,
       email: formData.email_parent || "",
-      adresse: formData.adresse_parent || "",
+      eleve_adresse: formData.eleve_adresse_parent || "",
       profession: formData.profession || "",
     };
 

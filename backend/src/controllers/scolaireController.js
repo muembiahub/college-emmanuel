@@ -3,6 +3,7 @@ import {
   getNotifications,
   markAsRead,
   markAllAsRead,
+  deleteNotification,
   getSections,
   getOptions,
   getClasses,
@@ -39,52 +40,81 @@ export const afficherDashboard = async (req, res) => {
     });
   }
 };
+
 /* ==========================================================
    NOTIFICATIONS
 ========================================================== */
 
+/**
+ * Récupérer la liste de toutes les notifications
+ */
 export const listerNotifications = async (req, res) => {
   try {
     const notifications = await getNotifications();
-
-    res.json(notifications);
+    return res.status(200).json(notifications);
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
+    console.error("Erreur lors de la récupération des notifications :", error);
+    return res.status(500).json({
       error: "Impossible de récupérer les notifications.",
     });
   }
 };
 
+/**
+ * Marquer une notification spécifique comme lue
+ */
 export const lireNotification = async (req, res) => {
   try {
-    await markAsRead(req.params.id);
+    const { id } = req.params;
+    await markAsRead(id);
 
-    res.json({
+    return res.status(200).json({
       success: true,
+      message: "Notification marquée comme lue.",
     });
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      error: error.message,
+    console.error(`Erreur lors du marquage de la notification ${req.params.id} :`, error);
+    return res.status(500).json({
+      error: error.message || "Impossible de marquer la notification comme lue.",
     });
   }
 };
 
+/**
+ * Marquer toutes les notifications comme lues
+ */
 export const lireToutesNotifications = async (req, res) => {
   try {
     await markAllAsRead();
 
-    res.json({
+    return res.status(200).json({
       success: true,
+      message: "Toutes les notifications ont été marquées comme lues.",
     });
   } catch (error) {
-    console.error(error);
+    console.error("Erreur lors du marquage de toutes les notifications :", error);
+    return res.status(500).json({
+      error: error.message || "Impossible de marquer toutes les notifications comme lues.",
+    });
+  }
+};
 
-    res.status(500).json({
-      error: error.message,
+/**
+ * Supprimer une notification
+ */
+export const supprimerNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await deleteNotification(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification supprimée avec succès.",
+    });
+  } catch (error) {
+    console.error(`Erreur lors de la suppression de la notification ${req.params.id} :`, error);
+    return res.status(500).json({
+      error: error.message || "Impossible de supprimer la notification.",
     });
   }
 };
@@ -169,55 +199,68 @@ export const inscrireEleve = async (req, res) => {
     const formData = req.body;
 
     /* ==========================================================
-       ÉLÈVE
-    ========================================================== */
+   ÉLÈVE
+========================================================== */
 
-    const eleveData = {
-      matricule: formData.matricule,
+const eleveData = {
+  matricule: formData.matricule,
 
-      nom: formData.nom?.trim() || "",
-      post_nom: formData.post_nom?.trim() || "",
-      prenom: formData.prenom?.trim() || "",
+  nom: formData.nom?.trim() || "",
+  post_nom: formData.post_nom?.trim() || "",
+  prenom: formData.prenom?.trim() || "",
 
-      sexe: formData.sexe,
-      date_naissance: formData.date_naissance,
-      lieu_naissance: formData.lieu_naissance,
-      nationalite: formData.nationalite || "Congolaise",
+  sexe: formData.sexe,
+  date_naissance: formData.date_naissance,
+  lieu_naissance: formData.lieu_naissance,
+  nationalite: formData.nationalite || "Congolaise",
 
-      numero_national: formData.numero_national,
+  numero_national: formData.numero_national,
 
-      telephone: formData.telephone || "",
-      email: formData.email || "",
-      adresse: formData.adresse || "",
-      photo: formData.photo || null,
+  telephone: formData.telephone || "",
+  email_eleve: formData.email || "",
+  adresse_eleve: formData.adresse || "",
 
-      date_admission:
-        formData.date_admission ||
-        new Date().toISOString().split("T")[0],
+  photo: formData.photo || null,
 
-      statut: formData.statut || "Active",
-    };
+  date_admission:
+    formData.date_admission ||
+    new Date().toISOString().split("T")[0],
 
-    /* ==========================================================
-       PARENT
-    ========================================================== */
+  statut: formData.statut || "Active",
+};
 
-    const parentData = {
-      nom_pere: formData.nom_pere,
-      numero_telephone_du_pere: formData.numero_telephone_du_pere,
-      fonction_du_pere: formData.fonction_du_pere,
+/* ==========================================================
+   PARENT
+========================================================== */
 
-      nom_mere: formData.nom_mere,
-      numero_telephone_de_la_mere:
-        formData.numero_telephone_de_la_mere,
-      fonction_de_la_mere: formData.fonction_de_la_mere,
+const parentData = {
+  nom_pere: formData.nom_pere?.trim() || "",
+  nom_mere: formData.nom_mere?.trim() || "",
 
-      numero_whatsapp: formData.numero_whatsapp || "",
+  numero_telephone_du_pere:
+    formData.numero_telephone_du_pere || "",
 
-      email: formData.email_parent || "",
-      adresse: formData.adresse_parent || "",
-      profession: formData.profession || "",
-    };
+  numero_telephone_de_la_mere:
+    formData.numero_telephone_de_la_mere || "",
+
+  numero_whatsapp:
+    formData.numero_whatsapp || "",
+
+  fonction_du_pere:
+    formData.fonction_du_pere || "",
+
+  fonction_de_la_mere:
+    formData.fonction_de_la_mere || "",
+
+  profession:
+    formData.profession || "",
+
+  email_parent:
+    formData.email_parent || "",
+
+  adresse_parent:
+    formData.adresse_parent || "",
+};
 
     /* ==========================================================
        INSCRIPTION

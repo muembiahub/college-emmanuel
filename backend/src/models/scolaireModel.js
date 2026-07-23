@@ -277,9 +277,8 @@ export const createInscription = async (
           fonction_du_pere: parentData.fonction_du_pere || "Non spécifié",
           fonction_de_la_mere: parentData.fonction_de_la_mere || "Non spécifié",
           numero_whatsapp: parentData.numero_whatsapp || "",
-          email: parentData.email || "",
-          adresse: parentData.adresse || "",
           profession: parentData.profession || "",
+
         },
       ])
       .select()
@@ -305,8 +304,6 @@ export const createInscription = async (
           lieu_naissance: eleveData.lieu_naissance || "Non spécifié",
           nationalite: eleveData.nationalite || "Non spécifié",
           telephone: eleveData.telephone || "",
-          email: eleveData.email || "",
-          adresse: eleveData.adresse || "",
           statut: eleveData.statut || "Active",
           date_admission:
             eleveData.date_admission ||
@@ -558,7 +555,7 @@ export const updateEleve = async (id, eleveData) => {
       numero_national: eleveData.numero_national,
       telephone: eleveData.telephone,
       email: eleveData.email,
-      adresse: eleveData.adresse,
+      eleve_adresse: eleveData.eleve_adresse,
       photo: eleveData.photo,
       statut: eleveData.statut_eleve,
       updated_at: new Date().toISOString(),
@@ -593,8 +590,8 @@ export const updateEleve = async (id, eleveData) => {
           eleveData.numero_whatsapp,
         email:
           eleveData.email_parent,
-        adresse:
-          eleveData.adresse_parent,
+        eleve_adresse:
+          eleveData.eleve_adresse_parent,
         profession:
           eleveData.profession,
 
@@ -638,6 +635,8 @@ export const updateEleve = async (id, eleveData) => {
 /* ==========================================================
    NOTIFICATIONS
 ========================================================== */
+
+
 
 /**
  * Créer une notification
@@ -735,6 +734,23 @@ export const markAllAsRead = async () => {
 };
 
 /**
+ * Supprimer une notification par son ID (AJOUTÉ)
+ */
+export const deleteNotification = async (notificationId) => {
+  const { error } = await supabase
+    .from("notifications")
+    .delete()
+    .eq("notification_id", notificationId);
+
+  if (error) {
+    console.error("Erreur suppression notification :", error);
+    throw error;
+  }
+
+  return true;
+};
+
+/**
  * Nombre de notifications non lues
  */
 export const getUnreadNotificationsCount = async () => {
@@ -753,6 +769,4 @@ export const getUnreadNotificationsCount = async () => {
 
   return count ?? 0;
 };
-
-
 

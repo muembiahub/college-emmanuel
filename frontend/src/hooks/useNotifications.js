@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function useNotifications() {
   const [notifications, setNotifications] = useState([]);
@@ -6,15 +6,17 @@ export default function useNotifications() {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      setLoading(true);
       const res = await fetch("/dashboard/notifications");
+
       if (!res.ok) {
-        throw new Error("Erreur lors du chargement des notifications");
+        throw new Error("Impossible de charger les notifications");
       }
-      const data = await res.json();
-      setNotifications(data || []);
+
+      const result = await res.json();
+
+      setNotifications(result.data || result || []);
     } catch (error) {
-      console.error("useNotifications error:", error);
+      console.error("Notifications :", error);
       setNotifications([]);
     } finally {
       setLoading(false);
@@ -23,58 +25,93 @@ export default function useNotifications() {
 
   useEffect(() => {
     fetchNotifications();
+
+    // Rafraîchissement automatique toutes les 30 secondes
+    const interval = setInterval(fetchNotifications, 30000);
+
+    return () => clearInterval(interval);
   }, [fetchNotifications]);
 
   const markAsRead = useCallback(async (id) => {
     try {
-      await fetch(`/dashboard/notifications/${id}/read`, {
+      const res = await fetch(`/dashboard/notifications/${id}/read`, {
         method: "PUT",
       });
+
+      if (!res.ok) throw new Error();
+
       setNotifications((prev) =>
-        prev.map((n) =>
-          n.notification_id === id ? { ...n, lu: true } : n
+        prev.map((notification) =>
+          notification.notification_id === id
+            ? { ...notification, lu: true }
+            : notification
         )
       );
     } catch (error) {
-      console.error("Erreur markAsRead:", error);
+      console.error(error);
     }
   }, []);
 
   const markAllRead = useCallback(async () => {
     try {
-      await fetch("/dashboard/notifications/read-all", {
+      const res = await fetch("/dashboard/notifications/read-all", {
         method: "PUT",
       });
-      setNotifications((prev) => prev.map((n) => ({ ...n, lu: true })));
+
+      if (!res.ok) throw new Error();
+
+      setNotifications((prev) =>
+        prev.map((notification) => ({
+          ...notification,
+          lu: true,
+        }))
+      );
     } catch (error) {
-      console.error("Erreur markAllRead:", error);
+      console.error(error);
     }
   }, []);
 
-  const badges = {
-    inscriptions: notifications.filter(
-      (n) => n.type === "inscription" && !n.lu
-    ).length,
-    classe: notifications.filter(
-      (n) => n.type === "classe" && !n.lu
-    ).length,
-    finances: notifications.filter(
-      (n) => n.type === "paiement" && !n.lu
-    ).length,
-    personnel: notifications.filter(
-      (n) => n.type === "personnel" && !n.lu
-    ).length,
-  };
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.lu).length,
+    [notifications]
+  );
 
-  const unreadCount = notifications.filter((n) => !n.lu).length;
+  const badges = useMemo(
+    () => ({
+      inscriptions: notifications.filter(
+        (n) => n.type === "inscription" && !n.lu
+      ).length,
+
+      finances: notifications.filter(
+        (n) =>
+          ["paiement", "finance", "obligation"].includes(n.type) &&
+          !n.lu
+      ).length,
+
+      personnel: notifications.filter(
+        (n) => n.type === "personnel" && !n.lu
+      ).length,
+
+      classe: notifications.filter(
+        (n) => n.type === "classe" && !n.lu
+      ).length,
+
+      eleves: notifications.filter(
+        (n) => n.type === "eleve" && !n.lu
+      ).length,
+
+      total: notifications.filter((n) => !n.lu).length,
+    }),
+    [notifications]
+  );
 
   return {
     notifications,
-    badges,
+    loading,
     unreadCount,
+    badges,
     markAsRead,
     markAllRead,
     refresh: fetchNotifications,
-    loading,
   };
 }

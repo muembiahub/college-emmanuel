@@ -102,7 +102,7 @@ export default function Contact() {
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <div className="grid gap-5 md:grid-cols-2">
               <input className="rounded-xl border p-3" placeholder="Nom complet" name="name" value={form.name} onChange={handleChange}/>
-              <input className="rounded-xl border p-3" placeholder="Adresse email" name="email" type="email" value={form.email} onChange={handleChange}/>
+              <input className="rounded-xl border p-3" placeholder="eleve_adresse email" name="email" type="email" value={form.email} onChange={handleChange}/>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
@@ -120,7 +120,7 @@ export default function Contact() {
         </div>
 
         <aside className="rounded-[2rem] bg-blue-950 p-8 text-white space-y-8">
-          <Info icon={<MdLocationOn size={28}/>} title="Adresse">
+          <Info icon={<MdLocationOn size={28}/>} title="eleve_adresse">
             Lubumbashi, Haut-Katanga<br/>RDC
           </Info>
 

@@ -58,6 +58,15 @@ import {
   ========================================================== */
   afficherDashboardFinance,
 
+//   ====================================
+//  Depense 
+// ======================================
+
+  listerDepenses,
+  ajouterDepense,
+  supprimerDepense,
+  modifierDepense,
+
 } from "../controllers/financeControllers.js";
 
 const router = express.Router();
@@ -171,5 +180,11 @@ router.get(
   "/obligations/:inscriptionId",
   getObligationsInscription
 );
+
+
+router.get("/depenses", listerDepenses);
+router.post("/depenses", ajouterDepense);
+router.delete("/depenses/:id", supprimerDepense);
+router.put("/depenses/:id", modifierDepense);
 
 export default router;

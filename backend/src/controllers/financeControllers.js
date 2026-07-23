@@ -34,6 +34,12 @@ import {
   getNombreDebiteurs,
   getEvolutionRecettesMensuelles,
   getRepartitionModesPaiement,
+
+  createDepense,
+  getDepenses,
+  deleteDepense,
+  updateDepense,
+  
 } from "../models/financeModel.js";
 
 /* ==========================================================
@@ -856,6 +862,64 @@ export const rechercherEleve = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+
+
+
+
+
+// ==================================================
+//  Depenses 
+// ==================================================
+
+export const listerDepenses = async (req, res) => {
+  try {
+    const depenses = await getDepenses();
+    return res.status(200).json(depenses);
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de charger les dépenses." });
+  }
+};
+
+export const ajouterDepense = async (req, res) => {
+  try {
+    const nouvelleDepense = await createDepense(req.body);
+    return res.status(201).json(nouvelleDepense);
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible d'ajouter la dépense." });
+  }
+};
+
+export const supprimerDepense = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await deleteDepense(id);
+    return res.status(200).json({ success: true, message: "Dépense supprimée." });
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de supprimer la dépense." });
+  }
+};
+
+export const modifierDepense = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const depense = await updateDepense(id, req.body);
+
+    return res.status(200).json({
+      success: true,
+      message: "Dépense mise à jour avec succès.",
+      data: depense,
+    });
+  } catch (error) {
+    console.error("Erreur modification dépense :", error);
+
+    return res.status(500).json({
+      success: false,
+      error: "Impossible de mettre à jour la dépense.",
     });
   }
 };

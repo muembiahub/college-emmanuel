@@ -24,7 +24,14 @@ export const notify = async ({
     if (!message) {
       throw new Error("Le message de notification est obligatoire.");
     }
-
+    console.log("Notification à créer :", {
+  destinataire_id,
+  type_destinataire,
+  type,
+  titre,
+  message,
+  reference_id,
+});
     const notification = await createNotification({
       destinataire_id,
       type_destinataire,
@@ -62,10 +69,25 @@ export const notifyInscription = async (eleve) => {
 ========================================================== */
 
 export const notifyPaiement = async (paiement) => {
+  // Récupérer le nom de l'élève
+  const { data: inscription, error } = await supabase
+    .from("vue_eleves_complet")
+    .select("nom, post_nom, prenom")
+    .eq("inscription_id", paiement.inscription_id)
+    .single();
+
+  if (error) throw error;
+
+  const eleve = inscription
+    ? `${inscription.nom} ${inscription.post_nom} ${inscription.prenom}`
+    : "Un élève";
+
   return notify({
     type: "paiement",
     titre: "Paiement reçu",
-    message: `Le paiement de ${paiement.montant}$ a été enregistré.`,
+    message: `${eleve} a effectué un paiement de ${Number(
+      paiement.montant_verse
+    ).toLocaleString()} FC (Reçu : ${paiement.numero_recu}).`,
     reference_id: paiement.paiement_id,
   });
 };

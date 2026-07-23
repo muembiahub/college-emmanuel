@@ -1,6 +1,3 @@
-// components/DashboardMenu.jsx
-// Version Rétractable Ultra-Stylisée avec Scroll Optimisé
-
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -14,17 +11,21 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  ChevronUp,
-  BookOpen,
   BarChart3,
-  Calendar,
-  Sparkles,
-  CreditCard,
-  FileText,
-  RotateCcw,
+  CalendarDays,
   Menu,
   X,
-  HomeIcon
+  CreditCard,
+  BriefcaseBusiness,
+  FileText,
+  ReceiptText,
+  Landmark,
+  BellDot,
+  MapPin,
+  FileCheck2,
+  ChevronLeft,
+  ChevronRight,
+  User
 } from "lucide-react";
 
 import { useAuth } from "../hooks/UseAuth";
@@ -32,20 +33,13 @@ import NotificationBell from "./NotificationBell";
 import logo from "../assets/logo.png";
 import { useNotification } from "../context/NotificationContext";
 
-
-export default function DashboardMenu() {
+export default function DashboardMenu({ isMenuOpen, setIsMenuOpen }) {
   const { logout } = useAuth();
   const location = useLocation();
   const { badges } = useNotification();
 
-
-  // État pour suivre quels menus de niveau supérieur sont ouverts
   const [openMenus, setOpenMenus] = useState({});
-  
-  // État pour le menu rétractable
-  const [isMenuOpen, setIsMenuOpen] = useState(true);
 
-  // Fonction pour basculer l'affichage d'un sous-menu
   const toggleMenu = (menuName) => {
     setOpenMenus((prev) => ({
       ...prev,
@@ -53,376 +47,209 @@ export default function DashboardMenu() {
     }));
   };
 
-  // Liste des menus enrichie avec la propriété optional 'submenu'
+  const baseLinkClasses = "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all duration-200 w-full text-left group";
+  const activeClasses = "bg-indigo-600/10 text-indigo-300 font-semibold shadow-sm";
+  const inactiveClasses = "text-slate-300 hover:bg-slate-800 hover:text-white";
+  const badgeClasses = "ml-auto bg-amber-500 text-slate-950 text-[10px] font-extrabold rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none";
+
   const menuItems = [
-    {
-      name: "Tableau de bord",
-      path: "/dashboard",
-      icon: LayoutDashboard,
-      color: "from-blue-500 to-cyan-600"
-    },
+    { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
     {
       name: "Inscriptions",
       path: "/dashboard/inscriptions",
       icon: UserPlus,
       badge: badges?.inscriptions || 0,
-      color: "from-indigo-500 to-purple-600",
       submenu: [
         { name: "Nouvelle inscription", path: "/dashboard/inscriptions/nouvelle", icon: UserPlus },
-        { name: "Réinscriptions", path: "/dashboard/inscriptions/reinscription", icon: RotateCcw },
+        { name: "Réinscriptions", path: "/dashboard/inscriptions/reinscription", icon: ClipboardList },
         { name: "Liste des inscrits", path: "/dashboard/students", icon: Users },
       ],
     },
-    {
-      name: "Classes",
-      path: "/dashboard/classes",
-      icon: School,
-      badge: badges?.classe || 0,
-      color: "from-green-500 to-emerald-600",
-      submenu: [
-        { name: "Maternelle", path: "/dashboard/classes/maternelle", icon: BookOpen },
-        { name: "Primaire", path: "/dashboard/classes/primaire", icon: BookOpen },
-        { name: "Secondaire", path: "/dashboard/classes/secondaire", icon: BookOpen },
-      ],
-    },
-    {
+     {
       name: "Finances",
       path: "/dashboard/finances",
       icon: Wallet,
       badge: badges?.finances || 0,
-      color: "from-yellow-500 to-orange-600",
       submenu: [
-        { name: "Homepage", path: "/dashboard/finances/homepage", icon:HomeIcon },
-        { name: "Paiements-eleves", path: "/dashboard/finances/paiements-eleves", icon: Sparkles },
-        { name: "Paiements-employes", path: "/dashboard/finances/paiements-elmployes", icon: Sparkles },
-        { name: "Dépenses", path: "/dashboard/finances/depenses", icon: FileText },
-        { name: "Rapports", path: "/dashboard/finances/rapports", icon: BarChart3 },
-        { name: "Historique", path: "/dashboard/finances/historique", icon: Calendar }
+        { name: "Vue d'ensemble", path: "/dashboard/finances/homepage", icon: BarChart3 },
+        { name: "Paiements Élèves", path: "/dashboard/finances/paiements-eleves", icon: CreditCard },
+        { name: "Paie Employés", path: "/dashboard/finances/paiements-employes", icon: BriefcaseBusiness },
+        { name: "Journal des dépenses", path: "/dashboard/finances/depenses", icon: ReceiptText },
+        { name: "Rapports financiers", path: "/dashboard/finances/rapports", icon: FileText },
+       ],
+    },
+    {
+      name: "Académique",
+      path: "/dashboard/classes",
+      icon: School,
+      submenu: [
+        { name: "Maternelle", path: "/dashboard/classes/maternelle", icon: Landmark },
+        { name: "Primaire", path: "/dashboard/classes/primaire", icon: Landmark },
+        { name: "Secondaire", path: "/dashboard/classes/secondaire", icon: Landmark },
       ],
     },
+   
+    { name: "Personnel", path: "/dashboard/personnel", icon: Users, badge: badges?.personnel || 0 },
+    { name: "Inventaire", path: "/dashboard/inventaire", icon: Package },
+    { name: "Évaluations", path: "/dashboard/notes", icon: FileCheck2 },
     {
-      name: "Personnel",
-      path: "/dashboard/personnel",
-      icon: Users,
-      badge: badges?.personnel || 0,
-      color: "from-pink-500 to-rose-600"
-    },
-    {
-      name: "Inventaire Patrimoine",
-      path: "/dashboard/inventaire",
-      icon: Package,
-      color: "from-purple-500 to-indigo-600"
-    },
-    {
-      name: "Notes de classe",
-      path: "/dashboard/notes",
-      icon: ClipboardList,
-      color: "from-red-500 to-pink-600"
-    },
-    {
-      name: "Rapports",
+      name: "Rapports Officiels",
       path: "/dashboard/reports",
       icon: BarChart3,
-      color: "from-teal-500 to-cyan-600",
       submenu: [
-        { name: "Rapports académiques", path: "/dashboard/reports/academic", icon: FileText },
-        { name: "Statistiques", path: "/dashboard/reports/statistics", icon: BarChart3 },
-        { name: "Présences", path: "/dashboard/reports/attendance", icon: Calendar },
+        { name: "Bulletins", path: "/dashboard/reports/academic", icon: FileText },
+        { name: "Statistiques annuelles", path: "/dashboard/reports/statistics", icon: BarChart3 },
+        { name: "Registre de présence", path: "/dashboard/reports/attendance", icon: CalendarDays },
       ],
     },
     {
-      name: "Calendrier",
+      name: "Agenda",
       path: "/dashboard/calendar",
-      icon: Calendar,
-      color: "from-blue-500 to-indigo-600",
+      icon: CalendarDays,
       submenu: [
-        { name: "Événements", path: "/dashboard/calendar/events", icon: Calendar },
-        { name: "Jours fériés", path: "/dashboard/calendar/holidays", icon: Calendar },
-        { name: "Examens", path: "/dashboard/calendar/exams", icon: ClipboardList },
+        { name: "Événements scolaires", path: "/dashboard/calendar/events", icon: CalendarDays },
+        { name: "Jours fériés", path: "/dashboard/calendar/holidays", icon: CalendarDays },
+        { name: "Périodes d'examens", path: "/dashboard/calendar/exams", icon: ClipboardList },
       ],
     },
   ];
 
   return (
     <>
-      {/* Bouton Toggle pour mobile/desktop */}
+      {/* Bouton Toggle pour mobile */}
       <button
         onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className="fixed top-6 left-6 z-50 p-2 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 lg:hidden"
+        className="fixed top-6 left-6 z-50 p-2.5 rounded-xl bg-slate-900 text-white shadow-lg hover:bg-slate-800 transition-all duration-300 lg:hidden"
+        aria-label="Toggle Menu"
       >
-        {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* Overlay pour mobile */}
+      {/* Overlay sombre pour mobile */}
       {isMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden transition-opacity duration-300"
           onClick={() => setIsMenuOpen(false)}
-        ></div>
+          aria-hidden="true"
+        />
       )}
 
-      {/* Menu Sidebar */}
+      {/* Menu Sidebar Fixe sur toute la hauteur de l'écran */}
       <aside
         className={`
           fixed
-          left-0
           top-0
+          left-0
           h-screen
-          bg-gradient-to-b
-          from-slate-900
-          via-indigo-900
-          to-slate-950
-          text-white
+          bg-slate-950
+          text-slate-200
           flex
           flex-col
           shadow-2xl
-          overflow-hidden
-          backdrop-blur-xl
           border-r
-          border-white/10
-          z-30
+          border-slate-800
+          z-40
           transition-all
           duration-300
           ease-in-out
-          ${isMenuOpen ? "w-72" : "-translate-x-full lg:translate-x-0 lg:w-72"}
-          lg:translate-x-0
-         
+          ${isMenuOpen ? "w-72 translate-x-0" : "-translate-x-full lg:translate-x-0 lg:w-20"}
         `}
       >
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-0 w-48 h-48 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-0 w-48 h-48 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse animation-delay-2000"></div>
-        </div>
-
-        {/* Logo Section */}
-        <div className="relative flex items-center gap-3 p-6 border-b border-white/10 bg-white/5 backdrop-blur-xl group hover:bg-white/10 transition-all duration-300 flex-shrink-0">
-          <div className="w-14 h-14 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/50 group-hover:shadow-indigo-500/70 transition-all duration-300 transform group-hover:scale-110">
-            <img
-              src={logo}
-              alt="Logo Collège Emmanuel"
-              className="w-12 h-12 object-contain"
-            />
+        {/* En-tête : Logo et Nom de l'école */}
+        <div className={`
+          flex 
+          items-center 
+          gap-3 
+          p-5 
+          border-b 
+          border-slate-800 
+          bg-slate-900/50
+          flex-shrink-0
+          ${!isMenuOpen && "lg:justify-center lg:p-4"}
+        `}>
+          <div className="w-11 h-11 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-inner flex-shrink-0">
+            <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
           </div>
-
-          <div className="flex-1">
-            <h1 className="text-lg font-bold leading-tight bg-gradient-to-r from-indigo-300 to-purple-300 bg-clip-text text-transparent">
-              Collège Emmanuel
-            </h1>
-            <p className="text-xs text-indigo-300/70">
-              Gestion Scolaire
+          <div className={`flex-1 ${!isMenuOpen && "lg:hidden"}`}>
+            <h1 className="text-sm font-bold text-white truncate">Collège Emmanuel</h1>
+            <p className="text-xs text-slate-400 flex items-center gap-1">
+              <MapPin size={11} /> Kinshasa, RDC
             </p>
           </div>
-
-          <Sparkles className="w-4 h-4 text-indigo-400 opacity-0 group-hover:opacity-100 transition-all duration-300" />
         </div>
 
-        {/* Notifications */}
-        <div className="px-4 py-3 border-b border-white/10 flex-shrink-0">
-          <NotificationBell />
-        </div>
+        {/* Section Notifications */}
+        {isMenuOpen && (
+          <div className="px-5 py-4 border-b border-slate-800 bg-slate-950 flex-shrink-0">
+            <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+              <span>Alertes récentes</span>
+              <BellDot size={16} className="text-amber-400"/>
+            </div>
+            <NotificationBell />
+          </div>
+        )}
 
-        {/* Menu - Scrollable */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-custom">
+        {/* Navigation Principale (Scrollable de manière indépendante) */}
+        <nav className="flex-1 px-3 py-5 space-y-1.5 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const hasSubmenu = item.submenu && item.submenu.length > 0;
             const isMenuOpenState = !!openMenus[item.name];
 
-            // Vérifie si l'un des sous-menus est actuellement actif
             const isSubmenuActive = hasSubmenu && item.submenu.some(sub => location.pathname === sub.path);
             const isMainActive = location.pathname === item.path;
 
             return (
-              <div key={item.path} className="space-y-1">
+              <div key={item.name} className="space-y-1.5">
                 {hasSubmenu ? (
-                  // Si le menu a un sous-menu, on utilise un bouton au lieu d'un NavLink direct
                   <button
                     onClick={() => toggleMenu(item.name)}
-                    className={`
-                      w-full
-                      flex
-                      items-center
-                      justify-between
-                      gap-3
-                      px-4
-                      py-3
-                      rounded-xl
-                      transition-all
-                      duration-300
-                      text-left
-                      group
-                      relative
-                      overflow-hidden
-                      border
-                      ${
-                        isSubmenuActive
-                          ? "bg-gradient-to-r from-indigo-600/50 to-purple-600/50 shadow-lg shadow-indigo-500/20 border-white/20"
-                          : "hover:bg-white/10 hover:border-white/20 border-white/5"
-                      }
-                    `}
+                    className={`${baseLinkClasses} ${isSubmenuActive ? activeClasses : inactiveClasses} ${!isMenuOpen && "lg:justify-center lg:px-3"}`}
+                    title={!isMenuOpen ? item.name : undefined}
                   >
-                    {/* Gradient background on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 to-purple-500/0 group-hover:from-indigo-500/10 group-hover:to-purple-500/10 transition-all duration-300 pointer-events-none"></div>
-
-                    <div className="relative flex items-center gap-3 flex-1">
-                      <div className={`
-                        p-2 rounded-lg transition-all duration-300 flex-shrink-0
-                        ${isSubmenuActive 
-                          ? "bg-indigo-500/30 text-indigo-300" 
-                          : "bg-white/5 text-indigo-200 group-hover:bg-white/10"
-                        }
-                      `}>
-                        <Icon size={18} />
-                      </div>
-                      <span className="font-semibold text-sm truncate">{item.name}</span>
-                      {item.badge && item.badge > 0 && (
-                        <span className="
-                          bg-gradient-to-r
-                          from-red-500
-                          to-pink-600
-                          text-white
-                          text-xs
-                          font-bold
-                          rounded-full
-                          w-5
-                          h-5
-                          flex
-                          items-center
-                          justify-center
-                          shadow-lg
-                          shadow-red-500/50
-                          flex-shrink-0
-                        ">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-
+                    <Icon size={18} className={`flex-shrink-0 ${isSubmenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`} />
+                    <span className={`truncate flex-1 ${!isMenuOpen && "lg:hidden"}`}>{item.name}</span>
+                    {item.badge && item.badge > 0 && isMenuOpen && (
+                      <span className={badgeClasses}>{item.badge}</span>
+                    )}
                     <ChevronDown
                       size={16}
-                      className={`
-                        transition-transform
-                        duration-300
-                        relative
-                        flex-shrink-0
-                        ${isMenuOpenState ? "rotate-180" : ""}
-                      `}
+                      className={`transition-transform duration-300 flex-shrink-0 ${!isMenuOpen && "lg:hidden"} ${isMenuOpenState ? "rotate-180 text-indigo-400" : "text-slate-500"}`}
                     />
                   </button>
                 ) : (
-                  // Si pas de sous-menu, simple NavLink classique
                   <NavLink
                     to={item.path}
                     end={item.path === "/dashboard"}
                     onClick={() => setIsMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `
-                      flex
-                      items-center
-                      justify-between
-                      gap-3
-                      px-4
-                      py-3
-                      rounded-xl
-                      transition-all
-                      duration-300
-                      group
-                      relative
-                      overflow-hidden
-                      border
-                      ${
-                        isActive
-                          ? "bg-gradient-to-r from-indigo-600/50 to-purple-600/50 shadow-lg shadow-indigo-500/20 border-white/20"
-                          : "hover:bg-white/10 hover:border-white/20 border-white/5"
-                      }
-                      `
-                    }
+                    className={({ isActive }) => `${baseLinkClasses} ${isActive ? activeClasses : inactiveClasses} ${!isMenuOpen && "lg:justify-center lg:px-3"}`}
+                    title={!isMenuOpen ? item.name : undefined}
                   >
-                    {/* Gradient background on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 to-purple-500/0 group-hover:from-indigo-500/10 group-hover:to-purple-500/10 transition-all duration-300 pointer-events-none"></div>
-
-                    <div className="relative flex items-center gap-3 flex-1">
-                      <div className="p-2 rounded-lg bg-white/5 text-indigo-200 group-hover:bg-white/10 transition-all duration-300 flex-shrink-0">
-                        <Icon size={18} />
-                      </div>
-                      <span className="font-semibold text-sm truncate">{item.name}</span>
-                    </div>
-
-                    {item.badge && item.badge > 0 && (
-                      <span className="
-                        bg-gradient-to-r
-                        from-red-500
-                        to-pink-600
-                        text-white
-                        text-xs
-                        font-bold
-                        rounded-full
-                        w-5
-                        h-5
-                        flex
-                        items-center
-                        justify-center
-                        shadow-lg
-                        shadow-red-500/50
-                        relative
-                        flex-shrink-0
-                      ">
-                        {item.badge}
-                      </span>
+                    <Icon size={18} className={`flex-shrink-0 ${isMainActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`} />
+                    <span className={`truncate flex-1 ${!isMenuOpen && "lg:hidden"}`}>{item.name}</span>
+                    {item.badge && item.badge > 0 && isMenuOpen && (
+                      <span className={badgeClasses}>{item.badge}</span>
                     )}
                   </NavLink>
                 )}
 
-                {/* Affichage du sous-menu si ouvert */}
-                {hasSubmenu && isMenuOpenState && (
-                  <div className="
-                    ml-4
-                    pl-3
-                    space-y-1
-                    border-l-2
-                    border-indigo-500/50
-                    animate-in
-                    fade-in
-                    slide-in-from-left-2
-                    duration-200
-                  ">
+                {hasSubmenu && isMenuOpenState && isMenuOpen && (
+                  <div className="pl-6 space-y-1 border-l-2 border-slate-800 ml-5 animate-in slide-in-from-left-2 duration-200">
                     {item.submenu.map((subItem) => {
                       const SubIcon = subItem.icon;
                       return (
                         <NavLink
-                          key={subItem.path}
+                          key={subItem.name}
                           to={subItem.path}
                           onClick={() => setIsMenuOpen(false)}
                           className={({ isActive }) =>
-                            `
-                            flex
-                            items-center
-                            gap-2
-                            px-3
-                            py-2
-                            rounded-lg
-                            text-xs
-                            font-medium
-                            transition-all
-                            duration-200
-                            group
-                            relative
-                            overflow-hidden
-                            border
-                            ${
-                              isActive
-                                ? "bg-indigo-600/40 text-indigo-100 border-indigo-500/50 shadow-md shadow-indigo-500/20"
-                                : "text-indigo-300/70 hover:text-indigo-100 hover:bg-white/5 border-white/5 hover:border-white/20"
-                            }
-                            `
+                            `flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors duration-150 ${
+                              isActive ? "text-white font-medium bg-slate-800" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                            }`
                           }
                         >
-                          {/* Gradient background on hover */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 to-purple-500/0 group-hover:from-indigo-500/5 group-hover:to-purple-500/5 transition-all duration-200 pointer-events-none"></div>
-
-                          <SubIcon size={14} className="relative flex-shrink-0" />
-                          <span className="relative truncate">{subItem.name}</span>
+                          <SubIcon size={14} className="flex-shrink-0" />
+                          <span className="truncate">{subItem.name}</span>
                         </NavLink>
                       );
                     })}
@@ -433,130 +260,46 @@ export default function DashboardMenu() {
           })}
         </nav>
 
-        {/* Footer Actions */}
-        <div className="
-          relative
-          border-t
-          border-white/10
-          p-4
-          space-y-2
-          bg-gradient-to-t
-          from-white/5
-          to-transparent
-          backdrop-blur-xl
-          flex-shrink-0
-        ">
+        {/* Pied de page : Paramètres, Profil, Déconnexion & Bouton Réduire/Agrandir */}
+        <div className="p-3 mt-auto border-t border-slate-800 bg-slate-900/30 space-y-1.5 flex-shrink-0">
           <NavLink
             to="/dashboard/settings"
             onClick={() => setIsMenuOpen(false)}
-            className={({ isActive }) =>
-              `
-              flex
-              items-center
-              gap-3
-              px-4
-              py-3
-              rounded-xl
-              transition-all
-              duration-300
-              group
-              relative
-              overflow-hidden
-              border
-              ${
-                isActive
-                  ? "bg-gradient-to-r from-indigo-600/50 to-purple-600/50 shadow-lg shadow-indigo-500/20 border-white/20"
-                  : "hover:bg-white/10 hover:border-white/20 border-white/5"
-              }
-              `
-            }
+            className={({ isActive }) => `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm group ${isActive ? activeClasses : inactiveClasses} ${!isMenuOpen && "lg:justify-center lg:px-3"}`}
+            title={!isMenuOpen ? "Paramètres" : undefined}
           >
-            {/* Gradient background on hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 to-purple-500/0 group-hover:from-indigo-500/10 group-hover:to-purple-500/10 transition-all duration-300 pointer-events-none"></div>
+            <Settings size={18} className={`flex-shrink-0 ${location.pathname === "/dashboard/settings" ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`} />
+            <span className={`truncate ${!isMenuOpen && "lg:hidden"}`}>Paramètres</span>
+          </NavLink>
 
-            <div className="p-2 rounded-lg bg-white/5 text-indigo-200 group-hover:bg-white/10 transition-all duration-300 relative">
-              <Settings size={18} />
-            </div>
-            <span className="font-semibold text-sm relative">Paramètres</span>
+          <NavLink
+            to="/dashboard/profile"
+            onClick={() => setIsMenuOpen(false)}
+            className={({ isActive }) => `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm group ${isActive ? activeClasses : inactiveClasses} ${!isMenuOpen && "lg:justify-center lg:px-3"}`}
+            title={!isMenuOpen ? "Profil" : undefined}
+          >
+            <User size={18} className={`flex-shrink-0 ${location.pathname === "/dashboard/profile" ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`} />
+            <span className={`truncate ${!isMenuOpen && "lg:hidden"}`}>Profil</span>
           </NavLink>
 
           <button
-            onClick={() => {
-              logout();
-              setIsMenuOpen(false);
-            }}
-            className="
-            w-full
-            flex
-            items-center
-            gap-3
-            px-4
-            py-3
-            rounded-xl
-            transition-all
-            duration-300
-            hover:bg-red-600/20
-            hover:border-red-500/30
-            text-left
-            font-semibold
-            text-sm
-            group
-            relative
-            overflow-hidden
-            border
-            border-white/5
-            hover:border-red-500/30
-            "
+            onClick={logout}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm w-full text-left group text-red-400 hover:bg-red-950/40 hover:text-red-300 ${!isMenuOpen && "lg:justify-center lg:px-3"}`}
+            title={!isMenuOpen ? "Déconnexion" : undefined}
           >
-            {/* Gradient background on hover */}
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 to-pink-500/0 group-hover:from-red-500/10 group-hover:to-pink-500/10 transition-all duration-300 pointer-events-none"></div>
+            <LogOut size={18} className="flex-shrink-0 text-red-500 group-hover:text-red-300" />
+            <span className={`truncate ${!isMenuOpen && "lg:hidden"}`}>Déconnexion</span>
+          </button>
 
-            <div className="p-2 rounded-lg bg-white/5 text-red-300 group-hover:bg-red-600/20 transition-all duration-300 relative">
-              <LogOut size={18} />
-            </div>
-            <span className="relative">Déconnexion</span>
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className={`hidden lg:flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm w-full text-left text-slate-400 hover:bg-slate-800 hover:text-white transition-all ${!isMenuOpen && "lg:justify-center lg:px-3"}`}
+            title={isMenuOpen ? "Réduire le menu" : "Agrandir le menu"}
+          >
+            {isMenuOpen ? <ChevronLeft size={18} className="flex-shrink-0 text-slate-500" /> : <ChevronRight size={18} className="flex-shrink-0 text-slate-500" />}
+            <span className={`truncate ${!isMenuOpen && "lg:hidden"}`}>Réduire le menu</span>
           </button>
         </div>
-
-        {/* CSS for custom scrollbar */}
-        <style jsx>{`
-          .scrollbar-custom::-webkit-scrollbar {
-            width: 6px;
-          }
-
-          .scrollbar-custom::-webkit-scrollbar-track {
-            background: transparent;
-          }
-
-          .scrollbar-custom::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.3);
-            border-radius: 3px;
-          }
-
-          .scrollbar-custom::-webkit-scrollbar-thumb:hover {
-            background: rgba(99, 102, 241, 0.5);
-          }
-
-          .scrollbar-custom {
-            scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
-            scrollbar-width: thin;
-          }
-
-          @keyframes slideIn {
-            from {
-              transform: translateX(-100%);
-              opacity: 0;
-            }
-            to {
-              transform: translateX(0);
-              opacity: 1;
-            }
-          }
-
-          .animation-delay-2000 {
-            animation-delay: 2s;
-          }
-        `}</style>
       </aside>
     </>
   );

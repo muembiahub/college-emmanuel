@@ -1,3 +1,4 @@
+// pages/Dashboard.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -7,91 +8,76 @@ import {
   CalendarX,
   TrendingUp,
   Calendar,
-  ArrowUpRight,
   FileText,
   Bell,
   UserPlus,
   CreditCard,
-  Loader2
+  Loader2,
+  AlertCircle
 } from "lucide-react";
 
 import { useAuth } from "../../hooks/UseAuth";
 import NotificationBell from "../../components/NotificationBell";
 import StudentsByClassChart from "./StudentsByClassChart";
 
-// Card component for displaying statistics
+// Composant Carte Statistique - Design Depth (Effet verrier / profondeur)
 const StatCard = ({ title, value, icon: Icon, colorClass, linkTo }) => (
   <Link
     to={linkTo || "#"}
-    className={`
-      rounded-xl
-      shadow-sm
-      border border-slate-200
+    className="
+      bg-slate-900/60 
+      backdrop-blur-md
+      rounded-2xl
+      shadow-xl
+      border border-slate-700/60
       p-5
       flex
       justify-between
       items-center
-      hover:shadow-md
-      hover:border-indigo-300
+      hover:bg-slate-900/80
+      hover:border-indigo-500/50
+      hover:shadow-indigo-500/10
       transition-all
-      duration-200
+      duration-300
       group
-    `}
+    "
   >
     <div>
-      <p className="
-        text-xs
-        uppercase
-        text-green-500
-        font-semibold
-        group-hover:text-indigo-600
-        transition-colors
-      ">
+      <p className="text-xs uppercase text-slate-400 font-bold tracking-wider group-hover:text-indigo-400 transition-colors">
         {title}
       </p>
-      <h2 className="
-        text-3xl
-        font-bold
-        text-slate-800
-        mt-2
-      ">
+      <h2 className="text-3xl font-extrabold text-white mt-2 tracking-tight">
         {value}
       </h2>
     </div>
-    <div className={`
-      p-3
-      rounded-xl
-      ${colorClass}
-      group-hover:scale-105
-      transition-transform
-    `}>
-      <Icon size={26} />
+    <div className={`p-3.5 rounded-xl shadow-inner ${colorClass} group-hover:scale-110 transition-transform duration-300`}>
+      <Icon size={24} />
     </div>
   </Link>
 );
 
-// Notification Item component
+// Composant Élément Notification
 const NotificationItem = ({ title, message, date }) => (
-  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 hover:bg-slate-100 transition-colors">
-    <p className="font-medium text-sm text-slate-800">{title}</p>
-    <p className="text-xs text-slate-500 mt-1">{message}</p>
-    {date && <p className="text-xs text-slate-400 mt-1">{new Date(date).toLocaleDateString("fr-FR")}</p>}
+  <div className="bg-slate-900/40 rounded-xl p-3.5 border border-slate-800/80 hover:bg-slate-900/70 transition-all">
+    <p className="font-semibold text-sm text-slate-200">{title}</p>
+    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{message}</p>
+    {date && <p className="text-[11px] text-slate-500 mt-2">{new Date(date).toLocaleDateString("fr-FR")}</p>}
   </div>
 );
 
-// Recent Student Item component
+// Composant Élève Récent
 const RecentStudentItem = ({ nom, prenom, nom_classe, photo }) => (
-  <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-3 border border-slate-100 hover:bg-slate-100 transition-colors">
+  <div className="flex items-center gap-3 bg-slate-900/40 rounded-xl p-3.5 border border-slate-800/80 hover:bg-slate-900/70 transition-all">
     {photo ? (
-      <img src={photo} alt={`${prenom} ${nom}`} className="w-8 h-8 rounded-full object-cover" />
+      <img src={photo} alt={`${prenom} ${nom}`} className="w-10 h-10 rounded-xl object-cover ring-2 ring-indigo-500/30" />
     ) : (
-      <div className="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700 text-sm font-semibold">
+      <div className="w-10 h-10 rounded-xl bg-indigo-600/20 ring-2 ring-indigo-500/30 flex items-center justify-center text-indigo-300 text-sm font-bold">
         {prenom[0]}{nom[0]}
       </div>
     )}
     <div>
-      <p className="font-medium text-sm text-slate-800">{prenom} {nom}</p>
-      <p className="text-xs text-slate-500">{nom_classe}</p>
+      <p className="font-semibold text-sm text-slate-200">{prenom} {nom}</p>
+      <p className="text-xs text-indigo-400/90 font-medium mt-0.5">{nom_classe}</p>
     </div>
   </div>
 );
@@ -132,19 +118,19 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-        <p className="ml-3 text-slate-600">Chargement du tableau de bord...</p>
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
+        <p className="ml-3 text-slate-300 font-medium">Chargement du tableau de bord...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="bg-white p-6 rounded-xl shadow text-red-600 border border-red-200">
-          <AlertCircle className="inline-block mr-2" />
-          {error}
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <div className="bg-red-950/40 border border-red-500/30 p-6 rounded-2xl shadow-2xl text-red-300 backdrop-blur-md flex items-center gap-3">
+          <AlertCircle className="w-6 h-6 flex-shrink-0" />
+          <span>{error}</span>
         </div>
       </div>
     );
@@ -155,28 +141,28 @@ export default function Dashboard() {
       title: "Élèves",
       value: dashboardData?.stats?.studentsCount ?? 0,
       icon: Users,
-      colorClass: "bg-blue-50 text-blue-600",
+      colorClass: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
       linkTo: "/dashboard/students"
     },
     {
       title: "Enseignants",
       value: dashboardData?.stats?.teachersCount ?? 0,
       icon: GraduationCap,
-      colorClass: "bg-green-50 text-green-600",
+      colorClass: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
       linkTo: "/dashboard/enseignants"
     },
     {
       title: "Classes",
       value: dashboardData?.stats?.classesCount ?? 0,
       icon: School,
-      colorClass: "bg-purple-50 text-purple-600",
+      colorClass: "bg-purple-500/10 text-purple-400 border border-purple-500/20",
       linkTo: "/dashboard/classes"
     },
     {
       title: "Absences",
       value: dashboardData?.stats?.absencesCount ?? 0,
       icon: CalendarX,
-      colorClass: "bg-red-50 text-red-600",
+      colorClass: "bg-rose-500/10 text-rose-400 border border-rose-500/20",
       linkTo: "/dashboard/absences"
     },
   ];
@@ -186,71 +172,42 @@ export default function Dashboard() {
       title: "Nouvelle Inscription",
       icon: UserPlus,
       link: "/dashboard/inscriptions/nouvelle",
-      color: "text-indigo-600",
-      bgColor: "bg-indigo-50",
+      color: "text-indigo-300 group-hover:text-white",
+      bgColor: "bg-indigo-950/40 hover:bg-indigo-900/60 border-indigo-500/30",
     },
     {
       title: "Gérer les Finances",
       icon: CreditCard,
-      link: "/dashboard/finances/paiements",
-      color: "text-green-600",
-      bgColor: "bg-green-50",
+      link: "/dashboard/finances/rapports",
+      color: "text-emerald-300 group-hover:text-white",
+      bgColor: "bg-emerald-950/40 hover:bg-emerald-900/60 border-emerald-500/30",
     },
     {
       title: "Voir les Rapports",
       icon: FileText,
       link: "/dashboard/rapports",
-      color: "text-orange-600",
-      bgColor: "bg-orange-50",
+      color: "text-amber-300 group-hover:text-white",
+      bgColor: "bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/30",
     },
   ];
 
   return (
-    <div className="
-      min-h-screen
-      p-4
-      sm:p-6
-      lg:p-8
-    ">
+    <div className="w-full space-y-8 pb-12">
       {/* HEADER */}
-      <div className="
-        flex
-        flex-col
-        sm:flex-row
-        justify-between
-        gap-4
-        mb-8
-      ">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/40 backdrop-blur-md border border-slate-800/80 p-6 rounded-2xl shadow-xl">
         <div>
-          <h1 className="
-            text-3xl
-            font-bold
-            text-slate-900
-          ">
-            Bonjour {user?.prenom || "Administrateur"}
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">
+            Bonjour, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{user?.prenom || "Administrateur"}</span> 👋
           </h1>
-          <p className="text-slate-500 mt-2">
-            Tableau de bord du Collège Emmanuel
+          <p className="text-slate-400 text-sm mt-1">
+            Tableau de bord général du Collège Emmanuel
           </p>
         </div>
-        <div className="
-          flex
-          items-center
-          gap-3
-        ">
+        <div className="flex items-center gap-3">
           <NotificationBell />
-          <div className="
-            bg-white
-            border border-slate-200
-            rounded-xl
-            px-4
-            py-2
-            flex
-            items-center
-            gap-2
-          ">
-            <Calendar size={16} className="text-slate-500" />
-            <span className="text-sm text-slate-700">
+          <div className="bg-slate-900/60 border border-slate-700/60 rounded-xl px-4 py-2.5 flex items-center gap-2.5 shadow-inner">
+            <Calendar size={16} className="text-indigo-400" />
+            <span className="text-xs font-medium text-slate-300 capitalize">
               {new Date().toLocaleDateString(
                 "fr-FR",
                 {
@@ -265,16 +222,7 @@ export default function Dashboard() {
       </div>
 
       {/* STATISTIQUES */}
-      <div className="
-        grid
-        grid-cols-1
-        sm:grid-cols-2
-        lg:grid-cols-4
-        gap-5
-        mb-8
-        font-bold
-        text-slate-50
-      ">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((item) => (
           <StatCard
             key={item.title}
@@ -288,8 +236,8 @@ export default function Dashboard() {
       </div>
 
       {/* QUICK ACTIONS */}
-      <div className="mb-8">
-        <h3 className="text-3xl font-bold text-red-50 mb-4">Actions Rapides</h3>
+      <div>
+        <h3 className="text-xl font-bold text-white mb-4 tracking-wide">Actions Rapides</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {quickActions.map((action) => (
             <Link
@@ -298,7 +246,7 @@ export default function Dashboard() {
               className={`
                 ${action.bgColor}
                 ${action.color}
-                rounded-xl
+                rounded-2xl
                 p-5
                 flex
                 flex-col
@@ -307,59 +255,43 @@ export default function Dashboard() {
                 gap-3
                 text-center
                 font-semibold
-                hover:shadow-md
-                hover:scale-105
+                shadow-xl
+                hover:scale-[1.02]
                 transition-all
-                duration-200
-                border border-transparent
-                hover:border-current
+                duration-300
+                border
+                group
+                backdrop-blur-md
               `}
             >
-              <action.icon size={32} />
-              <span>{action.title}</span>
+              <div className="p-3 rounded-xl bg-slate-950/40 shadow-inner group-hover:scale-110 transition-transform">
+                <action.icon size={26} />
+              </div>
+              <span className="text-sm font-medium tracking-wide">{action.title}</span>
             </Link>
           ))}
         </div>
       </div>
 
-      <div className="
-        grid
-        grid-cols-1
-        lg:grid-cols-3
-        gap-6
-      ">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* STUDENTS BY CLASS CHART */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-700/60 p-6 shadow-xl">
           {dashboardData?.stats?.studentsByClass ? (
             <StudentsByClassChart
               data={dashboardData.stats.studentsByClass}
             />
           ) : (
-            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-              <p className="text-slate-500">Chargement des statistiques de répartition...</p>
+            <div className="h-64 flex items-center justify-center text-slate-400">
+              <p>Chargement des statistiques de répartition...</p>
             </div>
           )}
         </div>
 
         {/* ASIDE - NOTIFICATIONS & RECENT STUDENTS */}
-        <aside className="
-          bg-white
-          rounded-xl
-          border border-slate-200
-          p-6
-          space-y-8
-        ">
+        <aside className="bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-700/60 p-6 shadow-xl space-y-8">
           <div>
-            <h3 className="
-              font-bold
-              text-lg
-              mb-4
-              flex
-              items-center
-              gap-2
-              text-slate-800
-            ">
-              <Bell size={18} className="text-indigo-500" />
+            <h3 className="font-bold text-base mb-4 flex items-center gap-2 text-white">
+              <Bell size={18} className="text-indigo-400" />
               Notifications Récentes
             </h3>
             <div className="space-y-3">
@@ -375,22 +307,14 @@ export default function Dashboard() {
                     />
                   ))
               ) : (
-                <p className="text-sm text-slate-500">Aucune notification récente.</p>
+                <p className="text-xs text-slate-400 italic">Aucune notification récente.</p>
               )}
             </div>
           </div>
 
           <div>
-            <h3 className="
-              font-bold
-              text-lg
-              mb-4
-              flex
-              items-center
-              gap-2
-              text-slate-800
-            ">
-              <TrendingUp size={18} className="text-green-500" />
+            <h3 className="font-bold text-base mb-4 flex items-center gap-2 text-white">
+              <TrendingUp size={18} className="text-emerald-400" />
               Derniers Élèves Inscrits
             </h3>
             <div className="space-y-3">
@@ -405,7 +329,7 @@ export default function Dashboard() {
                   />
                 ))
               ) : (
-                <p className="text-sm text-slate-500">Aucun élève inscrit récemment.</p>
+                <p className="text-xs text-slate-400 italic">Aucun élève inscrit récemment.</p>
               )}
             </div>
           </div>

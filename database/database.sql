@@ -84,7 +84,7 @@ CREATE TABLE enseignants (
     photo TEXT, -- URL to photo
     telephone VARCHAR(20),
     email VARCHAR(100) UNIQUE,
-    adresse TEXT,
+    eleve_adresse TEXT,
     date_embauche DATE DEFAULT CURRENT_DATE,
     statut VARCHAR(50) DEFAULT 'Actif' CHECK (statut IN ('Actif', 'Inactif', 'Congé')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -130,7 +130,7 @@ CREATE TABLE eleves (
     numero_national VARCHAR(20) UNIQUE, -- National identification number
     telephone VARCHAR(20),
     email VARCHAR(100) UNIQUE,
-    adresse TEXT,
+    eleve_adresse TEXT,
     date_admission DATE DEFAULT CURRENT_DATE,
     statut VARCHAR(50) DEFAULT 'Actif' CHECK (statut IN ('Actif', 'Inactif', 'Diplômé', 'Transféré')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -149,7 +149,7 @@ CREATE TABLE parents (
     fonction_de_la_mere VARCHAR(100),
     numero_whatsapp VARCHAR(20),
     email VARCHAR(100) UNIQUE, -- Parent's email
-    adresse TEXT, -- Parent's address
+    eleve_adresse TEXT, -- Parent's address
     profession VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -432,7 +432,7 @@ SELECT
     e.numero_national AS eleve_numero_national,
     e.telephone AS eleve_telephone,
     e.email AS eleve_email,
-    e.adresse AS eleve_adresse,
+    e.eleve_adresse AS eleve_eleve_adresse,
     e.date_admission AS eleve_date_admission,
     e.statut AS eleve_statut,
     
@@ -445,7 +445,7 @@ SELECT
     p.fonction_de_la_mere,
     p.numero_whatsapp AS parent_numero_whatsapp,
     p.email AS parent_email,
-    p.adresse AS parent_adresse,
+    p.eleve_adresse AS parent_eleve_adresse,
     p.profession AS parent_profession,
     
     i.inscription_id,
@@ -585,19 +585,19 @@ INSERT INTO niveaux (nom_niveau, ordre, section_id, option_id) VALUES
 ON CONFLICT (nom_niveau) DO NOTHING;
 
 -- Enseignants (example)
-INSERT INTO enseignants (nom, prenom, sexe, email, telephone, adresse) VALUES
+INSERT INTO enseignants (nom, prenom, sexe, email, telephone, eleve_adresse) VALUES
 ('Kabongo', 'Jean-Luc', 'Masculin', 'jeanluc.kabongo@example.com', '+243812345678', '123, Av. de la Paix, Kinshasa'),
 ('Mbuyi', 'Marie', 'Féminin', 'marie.mbuyi@example.com', '+243823456789', '456, Rue du Lac, Lubumbashi')
 ON CONFLICT (email) DO NOTHING;
 
 -- Parents (example)
-INSERT INTO parents (nom_pere, numero_telephone_du_pere, fonction_du_pere, nom_mere, numero_telephone_de_la_mere, fonction_de_la_mere, numero_whatsapp, email, adresse, profession) VALUES
+INSERT INTO parents (nom_pere, numero_telephone_du_pere, fonction_du_pere, nom_mere, numero_telephone_de_la_mere, fonction_de_la_mere, numero_whatsapp, email, eleve_adresse, profession) VALUES
 ('Kalala', '+243851112233', 'Ingénieur', 'Mwamba', '+243854445566', 'Médecin', '+243851112233', 'kalala.parent@example.com', '123, Av. de la Paix, Kinshasa', 'Ingénieur'),
 ('Lunda', '+243897778899', 'Entrepreneur', 'Kazadi', '+243891112233', 'Enseignante', '+243897778899', 'lunda.parent@example.com', '456, Rue du Lac, Lubumbashi', 'Entrepreneur')
 ON CONFLICT (email) DO NOTHING;
 
 -- Eleves (example)
-INSERT INTO eleves (nom, post_nom, prenom, sexe, date_naissance, lieu_naissance, nationalite, telephone, email, adresse, matricule, numero_national, date_admission, statut) VALUES
+INSERT INTO eleves (nom, post_nom, prenom, sexe, date_naissance, lieu_naissance, nationalite, telephone, email, eleve_adresse, matricule, numero_national, date_admission, statut) VALUES
 ('Kalala', 'Wa', 'Junior', 'Masculin', '2018-03-15', 'Kinshasa', 'Congolaise', '+243841234567', 'junior.kalala@example.com', '123, Av. de la Paix, Kinshasa', 'ELV001', '12345678901234567890', '2024-09-01', 'Actif'),
 ('Lunda', 'Na', 'Sarah', 'Féminin', '2012-09-01', 'Lubumbashi', 'Congolaise', '+243847654321', 'sarah.lunda@example.com', '456, Rue du Lac, Lubumbashi', 'ELV002', '09876543210987654321', '2024-09-01', 'Actif')
 ON CONFLICT (email) DO NOTHING;

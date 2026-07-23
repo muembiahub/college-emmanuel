@@ -1,4 +1,5 @@
 import { supabase } from "../config/database.js";
+import { notify } from "../services/notifications.js";
 
 /* ==========================================================
    ANNEES SCOLAIRES
@@ -407,7 +408,11 @@ export const getPaiementById = async (paiementId) => {
 };
 
 export const createPaiement = async (paiementData) => {
-  const { data, error } = await supabase
+  /* =====================================================
+     ENREGISTREMENT DU PAIEMENT
+  ===================================================== */
+
+  const { data: paiement, error } = await supabase
     .from("paiements")
     .insert([
       {
@@ -416,7 +421,8 @@ export const createPaiement = async (paiementData) => {
         montant_verse: Number(paiementData.montant_verse),
         montant_total: Number(paiementData.montant_total),
         mode_paiement: paiementData.mode_paiement,
-        reference_transaction: paiementData.reference_transaction || null,
+        reference_transaction:
+          paiementData.reference_transaction || null,
         observation: paiementData.observation || "",
       },
     ])
@@ -425,7 +431,47 @@ export const createPaiement = async (paiementData) => {
 
   if (error) throw error;
 
-  return data;
+  /* =====================================================
+     RECUPERATION DE L'ELEVE
+  ===================================================== */
+
+  const { data: eleve, error: eleveError } = await supabase
+  .from("vue_eleves_complet")
+  .select("nom, post_nom, prenom")
+  .eq("inscription_id", paiement.inscription_id)
+  .single();
+
+console.log("Paiement :", paiement);
+console.log("Élève :", eleve);
+console.log("Erreur élève :", eleveError);
+
+  /* =====================================================
+     NOTIFICATION
+  ===================================================== */
+
+  try {
+    await notify({
+      type: "paiement",
+      titre: "Paiement reçu",
+      message: `${
+        eleve
+          ? `${eleve.nom} ${eleve.post_nom} ${eleve.prenom}`
+          : "Un élève"
+      } a effectué un paiement de ${Number(
+        paiement.montant_verse
+      ).toLocaleString()} FC (Reçu : ${paiement.numero_recu}).`,
+      reference_id: paiement.paiement_id,
+    });
+
+    console.log("✅ Notification de paiement créée");
+  } catch (notificationError) {
+    console.error(
+      "Erreur lors de la création de la notification :",
+      notificationError
+    );
+  }
+
+  return paiement;
 };
 
 
@@ -1023,11 +1069,14 @@ export const getNombreDebiteurs = async () => {
     .select("inscription_id")
     .gt("reste", 0);
 
-  if (error) throw error;
+  if (error) {
+    console.error("Erreur lors de la récupération des débiteurs :", error);
+    throw error;
+  }
 
-  return new Set(data.map((o) => o.inscription_id)).size;
+  const nombreDebiteurs = new Set(data.map((obligation) => obligation.inscription_id));
+  return nombreDebiteurs.size;
 };
-
 /* ==========================================================
    ÉVOLUTION DES RECETTES PAR MOIS
 ========================================================== */
@@ -1078,4 +1127,109 @@ export const getRepartitionModesPaiement = async () => {
     mode,
     montant,
   }));
+};
+
+
+
+
+// =============================================================
+//  Depenses
+// =============================================================
+
+/**
+ * Créer une nouvelle dépense
+ */
+export const createDepense = async ({ motif, montant, categorie, date_depense, description = "" }) => {
+  const { data, error } = await supabase
+    .from("depenses")
+    .insert([
+      {
+        motif,
+        montant: parseFloat(montant),
+        categorie,
+        date_depense,
+        description,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Erreur lors de la création de la dépense :", error);
+    throw error;
+  }
+
+  return data;
+};
+
+/**
+ * Récupérer toutes les dépenses (triées par date récente)
+ */
+export const getDepenses = async () => {
+  const { data, error } = await supabase
+    .from("depenses")
+    .select("*")
+    .order("date_depense", { ascending: false });
+
+  if (error) {
+    console.error("Erreur lors de la récupération des dépenses :", error);
+    throw error;
+  }
+
+  return data ?? [];
+};
+
+/**
+ * Supprimer une dépense par son ID
+ */
+export const deleteDepense = async (depenseId) => {
+  const { error } = await supabase
+    .from("depenses")
+    .delete()
+    .eq("depense_id", depenseId);
+
+  if (error) {
+    console.error("Erreur lors de la suppression de la dépense :", error);
+    throw error;
+  }
+
+  return true;
+};
+
+/**
+ * Mettre à jour une dépense
+ */
+export const updateDepense = async (
+  depenseId,
+  {
+    motif,
+    montant,
+    categorie,
+    date_depense,
+    description = "",
+  }
+) => {
+  const { data, error } = await supabase
+    .from("depenses")
+    .update({
+      motif,
+      montant: parseFloat(montant),
+      categorie,
+      date_depense,
+      description,
+      updated_at: new Date().toISOString(), // si la colonne existe
+    })
+    .eq("depense_id", depenseId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(
+      "Erreur lors de la mise à jour de la dépense :",
+      error
+    );
+    throw error;
+  }
+
+  return data;
 };

@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/UseAuth";
+import { User, Shield, AlertTriangle, LogOut, ArrowLeft, Loader2, UserCheck } from "lucide-react";
 
 export default function Profile() {
   const { user, logout, loading } = useAuth();
@@ -23,7 +24,7 @@ export default function Profile() {
           return;
         }
 
-        const response = await fetch(`/dashboard/profile/${user.id}`, {
+        const response = await fetch(`/dashboard/profile/${user?.id || ""}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -38,10 +39,9 @@ export default function Profile() {
           return;
         }
 
-        // PROTECTION : Vérifie si la réponse est bien du JSON et non du HTML (erreur 500/404)
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
-          throw new Error(`Le serveur a renvoyé du HTML au lieu de JSON (Statut: ${response.status}). Vérifiez vos routes Express.`);
+          throw new Error(`Le serveur a renvoyé du HTML au lieu de JSON (Statut: ${response.status}).`);
         }
 
         const data = await response.json();
@@ -60,22 +60,24 @@ export default function Profile() {
       }
     };
 
-    loadProfile();
+    if (user?.id) {
+      loadProfile();
+    }
 
     return () => controller.abort();
-  }, [navigate]);
+  }, [navigate, user]);
 
-  // Fusion sécurisée des états utilisateur
   const currentUser = profile || user || null;
   const currentLoading = loading || fetching;
 
-  // Sécurisation du calcul du rôle (Évite l'erreur #310)
   const roleName = useMemo(() => {
-    if (!currentUser?.roles?.name) return "utilisateur";
-    return currentUser.roles.name.toLowerCase();
+    if (!currentUser?.roles?.name) return "Utilisateur";
+    const name = currentUser.roles.name.toLowerCase();
+    if (name === "superadmin") return "Super Administrateur";
+    if (name === "admin") return "Administrateur";
+    return name.charAt(0).toUpperCase() + name.slice(1);
   }, [currentUser]);
 
-  // Sécurisation du nom d'affichage
   const displayName = useMemo(() => {
     if (!currentUser) return "Utilisateur";
     if (currentUser.firstname || currentUser.lastname) {
@@ -89,53 +91,81 @@ export default function Profile() {
 
   if (currentLoading) {
     return (
-      <div className="flex h-[calc(100vh-120px)] items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="relative inline-flex">
+            <div className="absolute inset-0 bg-indigo-500 rounded-full blur-xl opacity-30 animate-pulse"></div>
+            <Loader2 className="animate-spin text-indigo-400 w-10 h-10 mx-auto relative z-10" />
+          </div>
+          <p className="text-slate-300 font-medium text-xs sm:text-sm tracking-wide">
+            Chargement sécurisé du profil...
+          </p>
+        </div>
       </div>
     );
   }
 
   if (!currentUser) {
     return (
-      <div className="space-y-4 max-w-2xl mx-auto mt-10">
-        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-rose-700">
-          <h1 className="text-2xl font-semibold">Profil introuvable</h1>
-          <p className="mt-2 text-sm text-rose-700/80">
-            {error || "Vous devez vous reconnecter pour afficher vos informations."}
-          </p>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="space-y-6 max-w-xl w-full mx-auto p-6 lg:p-8 rounded-2xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] text-center">
+          <div className="inline-flex p-4 bg-rose-500/10 rounded-2xl shadow-inner border border-rose-500/20 text-rose-400">
+            <AlertTriangle size={28} />
+          </div>
+          <div>
+            <h1 className="text-lg lg:text-xl font-bold text-white tracking-tight">Profil introuvable</h1>
+            <p className="mt-1.5 text-xs lg:text-sm text-slate-400">
+              {error || "Vous devez vous reconnecter pour afficher vos informations personnelles."}
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/login")}
+            className="w-full rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 py-3 text-xs lg:text-sm font-bold text-white transition-all hover:brightness-110 shadow-lg shadow-indigo-500/25 active:scale-95"
+          >
+            Aller à la page de connexion
+          </button>
         </div>
-        <button
-          onClick={() => navigate("/login")}
-          className="w-full rounded-2xl bg-indigo-600 py-3 font-semibold text-white transition hover:bg-indigo-700"
-        >
-          Aller à la page de connexion
-        </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* En-tête Profil */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">
-              Mon profil
-            </p>
-            <h1 className="mt-3 text-3xl font-bold text-slate-900">{displayName}</h1>
-            <p className="mt-2 text-sm text-slate-500">
-              Rôle : {roleName === "superadmin" ? "Super administrateur" : roleName === "admin" ? "Administrateur" : {roleName}}
-            </p>
+    <div className="p-3 sm:p-5 lg:p-8 text-slate-100 selection:bg-indigo-500 selection:text-white">
+      <div className="relative z-10 max-w-7xl mx-auto space-y-5 lg:space-y-6">
+        
+        {/* EN-TÊTE PROFIL */}
+        <div className="relative rounded-2xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 lg:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-transparent pointer-events-none"></div>
+
+          <div className="relative flex items-center gap-4.5">
+            <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-700 flex items-center justify-center text-white text-2xl lg:text-3xl font-black shadow-lg shadow-indigo-500/25 ring-1 ring-white/25 shrink-0">
+              {displayName[0]?.toUpperCase()}
+            </div>
+            <div>
+              <span className="text-[11px] uppercase tracking-widest text-indigo-400 font-bold">
+                Mon Compte Sécurisé
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-black text-white mt-0.5 tracking-tight">
+                {displayName}
+              </h1>
+              <p className="text-xs lg:text-sm text-slate-300 flex items-center gap-2 mt-1">
+                <Shield size={14} className="text-indigo-400 shrink-0" /> 
+                <span>Rôle attribué :</span> 
+                <span className="font-bold text-indigo-300 px-2 py-0.5 bg-white/[0.05] rounded-lg border border-white/10">
+                  {roleName}
+                </span>
+              </p>
+            </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="relative flex items-center gap-3">
             <button
               type="button"
               onClick={() => navigate("/dashboard")}
-              className="rounded-full border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] px-4 py-2.5 text-xs font-semibold text-slate-200 transition-all shadow-md active:scale-95"
             >
-              Retour au dashboard
+              <ArrowLeft size={16} />
+              <span>Tableau de bord</span>
             </button>
             <button
               type="button"
@@ -143,51 +173,87 @@ export default function Profile() {
                 logout();
                 navigate("/login");
               }}
-              className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700"
+              className="flex items-center gap-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white transition-all shadow-lg shadow-rose-500/20 active:scale-95"
             >
-              Déconnexion
+              <LogOut size={16} />
+              <span>Déconnexion</span>
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Affichage alerte si le fetch a échoué mais qu'on a le user du contexte */}
-      {error && (
-        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-rose-700">
-          <p className="font-semibold">⚠️ Attention : Mode dégradé</p>
-          <p className="mt-1 text-sm">{error}</p>
-        </div>
-      )}
+        {/* ALERTE EN MODE DÉGRADÉ SI ERREUR MAIS UTILISATEUR DISPO */}
+        {error && (
+          <div className="rounded-2xl bg-amber-950/30 border border-amber-500/30 p-4 lg:p-5 shadow-xl text-amber-300 backdrop-blur-md flex items-center gap-3.5">
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 text-amber-400" />
+            <div className="text-xs">
+              <span className="font-bold">Mode dégradé actif :</span> {error}
+            </div>
+          </div>
+        )}
 
-      {/* Grille d'informations */}
-      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">Informations personnelles</h2>
-          <div className="mt-6 space-y-5">
+        {/* GRILLE D'INFORMATIONS */}
+        <div className="grid gap-5 lg:gap-6 xl:grid-cols-[1.5fr_1fr]">
+          
+          {/* INFORMATIONS PERSONNELLES */}
+          <section className="rounded-2xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 lg:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] space-y-6">
+            <div className="flex items-center gap-2.5 border-b border-white/10 pb-4">
+              <div className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shadow-sm">
+                <User size={18} />
+              </div>
+              <div>
+                <h2 className="text-base lg:text-lg font-bold text-white tracking-tight">
+                  Informations personnelles
+                </h2>
+                <p className="text-[11px] text-slate-400">Vos données nominatives enregistrées</p>
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <ProfileField label="Nom complet" value={displayName} />
               <ProfileField label="Nom d'utilisateur" value={currentUser.username || "-"} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <ProfileField label="Email" value={currentUser.email || "-"} required />
-              <ProfileField label="Téléphone" value={currentUser.phone || "-"} />
+              <ProfileField label="Adresse Email" value={currentUser.email || "-"} required />
+              <ProfileField label="Numéro de téléphone" value={currentUser.phone || "-"} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <ProfileField label="Date de naissance" value={currentUser.birthday || "-"} />
-              <ProfileField label="Statut" value={currentUser.is_active ? "Actif" : "Inactif"} />
+              
+              <div className="rounded-2xl bg-white/[0.02] border border-white/10 p-4 shadow-inner">
+                <p className="text-xs font-semibold text-slate-400">Statut du compte</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className={`inline-block w-2.5 h-2.5 rounded-full ${currentUser.is_active ? "bg-emerald-400 shadow-emerald-400/50 shadow-md animate-pulse" : "bg-rose-400"}`} />
+                  <span className="text-xs sm:text-sm font-bold text-slate-200">
+                    {currentUser.is_active ? "Actif et vérifié" : "Inactif"}
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">Détails du compte</h2>
-          <ul className="mt-6 space-y-4">
-            <AccountDetail label="ID utilisateur" value={currentUser.user_id || currentUser.uid || currentUser.id || "-"} />
-            <AccountDetail label="Rôle" value={roleName} />
-            <AccountDetail label="Date de création" value={currentUser.created_at ? new Date(currentUser.created_at).toLocaleDateString("fr-FR") : "-"} />
-            <AccountDetail label="Dernière connexion" value={currentUser.updated_at ? new Date(currentUser.updated_at).toLocaleDateString("fr-FR") : "-"} />
-          </ul>
-        </section>
+          {/* DÉTAILS TECHNIQUES DU COMPTE */}
+          <section className="rounded-2xl bg-gradient-to-b from-white/[0.08] to-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 lg:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] space-y-6">
+            <div className="flex items-center gap-2.5 border-b border-white/10 pb-4">
+              <div className="p-2.5 rounded-xl bg-purple-500/15 text-purple-400 border border-purple-500/30 shadow-sm">
+                <UserCheck size={18} />
+              </div>
+              <div>
+                <h2 className="text-base lg:text-lg font-bold text-white tracking-tight">
+                  Détails techniques
+                </h2>
+                <p className="text-[11px] text-slate-400">Métadonnées système</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <AccountDetail label="ID utilisateur" value={currentUser.user_id || currentUser.uid || currentUser.id || "-"} />
+              <AccountDetail label="Rôle attribué" value={roleName} />
+              <AccountDetail label="Création du compte" value={currentUser.created_at ? new Date(currentUser.created_at).toLocaleDateString("fr-FR", { day: '2-digit', month: 'short', year: 'numeric' }) : "-"} />
+              <AccountDetail label="Dernière mise à jour" value={currentUser.updated_at ? new Date(currentUser.updated_at).toLocaleDateString("fr-FR", { day: '2-digit', month: 'short', year: 'numeric' }) : "-"} />
+            </div>
+          </section>
+
+        </div>
       </div>
     </div>
   );
@@ -195,20 +261,20 @@ export default function Profile() {
 
 function ProfileField({ label, value, required }) {
   return (
-    <div className="rounded-3xl bg-slate-50 p-5">
-      <p className={`text-sm font-medium text-slate-500 ${required ? "after:content-['_*'] after:text-red-500" : ""}`}>
+    <div className="rounded-2xl bg-white/[0.02] border border-white/10 p-4 shadow-inner transition-all hover:border-white/20">
+      <p className={`text-xs font-semibold text-slate-400 ${required ? "after:content-['_*'] after:text-rose-400" : ""}`}>
         {label}
       </p>
-      <p className="mt-2 text-sm font-semibold text-slate-900">{value}</p>
+      <p className="mt-1.5 text-xs sm:text-sm font-bold text-slate-100 truncate">{value}</p>
     </div>
   );
 }
 
 function AccountDetail({ label, value }) {
   return (
-    <li className="flex items-center justify-between rounded-3xl bg-slate-50 px-5 py-4 text-sm text-slate-700">
-      <span>{label}</span>
-      <span className="font-semibold text-slate-900">{value}</span>
-    </li>
+    <div className="flex items-center justify-between rounded-xl bg-white/[0.02] border border-white/10 px-4 py-3 text-xs text-slate-300 shadow-inner hover:border-white/20 transition-all">
+      <span className="text-slate-400 font-medium">{label}</span>
+      <span className="font-bold text-slate-100 font-mono text-[11px]">{value}</span>
+    </div>
   );
 }
