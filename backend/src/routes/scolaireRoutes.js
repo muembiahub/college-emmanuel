@@ -31,6 +31,13 @@ import {
 
   supprimerNotification,
 
+  getPersonnel,
+  getPersonnelById,
+  createPersonnel,
+  updatePersonnel,
+  deletePersonnel,
+
+
 } from "../controllers/scolaireController.js";
 
 const router = express.Router();
@@ -85,6 +92,18 @@ router.put("/eleves/:id", modifierEleve);
 router.get("/notifications", listerNotifications);
 router.put("/notifications/read-all", lireToutesNotifications);
 router.put("/notifications/:id/read", lireNotification);
-router.delete("/notifications/:id", supprimerNotification); 
+router.delete("/notifications/:id", supprimerNotification);
+
+
+// ========================================================
+//  Personnel 
+// ========================================================
+
+router.get("/personnel", getPersonnel);
+router.get("/personnel/:id", getPersonnelById);
+router.post("/personnel", createPersonnel);
+router.put("/personnel/:id", updatePersonnel);
+router.delete("/personnel/:id", deletePersonnel);
+
 
 export default router;

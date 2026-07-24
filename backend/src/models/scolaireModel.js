@@ -770,3 +770,78 @@ export const getUnreadNotificationsCount = async () => {
   return count ?? 0;
 };
 
+
+
+export const fetchAllPersonnel = async () => {
+  const { data, error } = await supabase
+    .from("personnel")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+};
+
+export const fetchPersonnelById = async (id) => {
+  const { data, error } = await supabase
+    .from("personnel")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const insertPersonnel = async (personnelData) => {
+  const { name, email, phone, role, department } = personnelData;
+
+  const { data, error } = await supabase
+    .from("personnel")
+    .insert([
+      {
+        name,
+        email: email || null,
+        phone: phone || null,
+        role,
+        department: department || null,
+        created_at: new Date().toISOString(),
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const modifyPersonnel = async (id, personnelData) => {
+  const { name, email, phone, role, department } = personnelData;
+
+  const { data, error } = await supabase
+    .from("personnel")
+    .update({
+      name,
+      email: email || null,
+      phone: phone || null,
+      role,
+      department: department || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const removePersonnel = async (id) => {
+  const { error } = await supabase
+    .from("personnel")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+  return true;
+};

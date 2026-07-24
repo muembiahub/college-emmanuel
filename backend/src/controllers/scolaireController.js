@@ -12,7 +12,12 @@ import {
   getEleves,
   getEleveById,
   deleteInscriptionComplete,
-  updateEleve
+  updateEleve,
+  fetchAllPersonnel,
+  fetchPersonnelById,
+  insertPersonnel,
+  modifyPersonnel,
+  removePersonnel,
 } from "../models/scolaireModel.js";
 
 import {
@@ -470,5 +475,74 @@ export const modifierEleve = async (req, res) => {
       error: error.message,
     });
 
+  }
+};
+
+
+
+export const getPersonnel = async (req, res) => {
+  try {
+    const data = await fetchAllPersonnel();
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Erreur getPersonnel :", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getPersonnelById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = await fetchPersonnelById(id);
+    
+    if (!data) {
+      return res.status(404).json({ error: "Employé introuvable" });
+    }
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Erreur getPersonnelById :", error);
+    res.status(404).json({ error: error.message });
+  }
+};
+
+export const createPersonnel = async (req, res) => {
+  try {
+    const { name, role } = req.body;
+
+    if (!name || !role) {
+      return res.status(400).json({ error: "Le nom et le rôle sont obligatoires." });
+    }
+
+    const newPerson = await insertPersonnel(req.body);
+    res.status(201).json(newPerson);
+  } catch (error) {
+    console.error("Erreur createPersonnel :", error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const updatePersonnel = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedPerson = await modifyPersonnel(id, req.body);
+    res.status(200).json(updatedPerson);
+  } catch (error) {
+    console.error("Erreur updatePersonnel :", error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const deletePersonnel = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await removePersonnel(id);
+    res.status(200).json({
+      success: true,
+      message: "Employé supprimé avec succès.",
+    });
+  } catch (error) {
+    console.error("Erreur deletePersonnel :", error);
+    res.status(500).json({ error: error.message });
   }
 };

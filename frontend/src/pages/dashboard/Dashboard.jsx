@@ -178,14 +178,14 @@ export default function Dashboard() {
     {
       title: "Gérer les Finances",
       icon: CreditCard,
-      link: "/dashboard/finances/rapports",
+      link: "finances/homepage",
       color: "text-emerald-300 group-hover:text-white",
       bgColor: "bg-emerald-950/40 hover:bg-emerald-900/60 border-emerald-500/30",
     },
     {
       title: "Voir les Rapports",
       icon: FileText,
-      link: "/dashboard/rapports",
+      link: "/dashboard/finances/rapports",
       color: "text-amber-300 group-hover:text-white",
       bgColor: "bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/30",
     },
