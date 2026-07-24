@@ -145,11 +145,11 @@ export default function Dashboard() {
       linkTo: "/dashboard/students"
     },
     {
-      title: "Enseignants",
+      title: "Personnels",
       value: dashboardData?.stats?.teachersCount ?? 0,
       icon: GraduationCap,
       colorClass: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
-      linkTo: "/dashboard/enseignants"
+      linkTo: "/dashboard/personnel"
     },
     {
       title: "Classes",
