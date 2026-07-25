@@ -54,6 +54,7 @@ export default function DashboardMenu({ isMenuOpen, setIsMenuOpen }) {
 
   const menuItems = [
     { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
+    { name: "Notifications", path: "/dashboard/notifications", icon: LayoutDashboard },
     {
       name: "Inscriptions",
       path: "/dashboard/inscriptions",
@@ -273,12 +274,12 @@ export default function DashboardMenu({ isMenuOpen, setIsMenuOpen }) {
           </NavLink>
 
           <NavLink
-            to="/dashboard/profile"
+            to="/dashboard/profiles"
             onClick={() => setIsMenuOpen(false)}
             className={({ isActive }) => `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm group ${isActive ? activeClasses : inactiveClasses} ${!isMenuOpen && "lg:justify-center lg:px-3"}`}
             title={!isMenuOpen ? "Profil" : undefined}
           >
-            <User size={18} className={`flex-shrink-0 ${location.pathname === "/dashboard/profile" ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`} />
+            <User size={18} className={`flex-shrink-0 ${location.pathname === "/dashboard/profiles" ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`} />
             <span className={`truncate ${!isMenuOpen && "lg:hidden"}`}>Profil</span>
           </NavLink>
 
