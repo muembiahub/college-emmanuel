@@ -101,8 +101,7 @@ export const genererObligationsFinancieres = async (
 
   const { data: tousLesFrais, error } = await supabase
   .from("frais_scolaires")
-  .select("*");
-
+  .select("*")
 if (error) throw error;
 
 console.log("TOTAL FRAIS :", tousLesFrais.length);
@@ -315,6 +314,132 @@ export const deleteTypeFrais = async (id) => {
    FRAIS SCOLAIRES
 ========================================================== */
 
+// 1. READ : Récupérer tous les frais via une vue ou des jointures optimisées
+export const getFraisScolaires = async () => {
+  const { data, error } = await supabase
+    .from("vue_frais_scolaires_complet") 
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    // Solution de secours : si la vue n'existe pas encore, on fait les jointures directement
+    console.warn("Vue non trouvée, utilisation des jointures directes :", error.message);
+    
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("frais_scolaires")
+      .select(`
+        *,
+        annees_scolaires(libelle),
+        types_frais(nom),
+        sections(nom),
+        options(nom),
+        classes(nom)
+      `)
+      .order("created_at", { ascending: false });
+
+    if (fallbackError) throw fallbackError;
+    return fallbackData;
+  }
+
+  return data;
+};
+// Récupérer un frais scolaire par son ID (en privilégiant la vue si elle existe)
+export const getFraisScolaireById = async (id) => {
+  // 1. Essayer de récupérer depuis la vue pour avoir les libellés complets
+  const { data: vueData, error: vueError } = await supabase
+    .from("vue_frais_scolaires_complet")
+    .select("*")
+    .eq("frais_id", id)
+    .single();
+
+  if (!vueError && vueData) {
+    return vueData;
+  }
+
+  // 2. Fallback sur la table de base avec la colonne correcte nom_classe
+  const { data, error } = await supabase
+    .from("frais_scolaires")
+    .select(`
+      *,
+      annees_scolaires(libelle),
+      types_frais(nom),
+      sections(nom),
+      options(nom),
+      classes(nom_classe)
+    `)
+    .eq("frais_id", id)
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+// 2. CREATE : La création pointe toujours sur la vraie table
+export const createFraisScolaire = async (fraisData) => {
+  const { data, error } = await supabase
+    .from("frais_scolaires")
+    .insert([
+      {
+        annee_id: fraisData.annee_id,
+        type_frais_id: fraisData.type_frais_id,
+        section_id: fraisData.section_id,
+        option_id: fraisData.option_id || null,
+        sexe: fraisData.sexe || 'tous',
+        periode: fraisData.periode || 'annuel',
+        montant: parseFloat(fraisData.montant),
+        actif: fraisData.actif ?? true,
+        classe_id: fraisData.classe_id || null,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+// 3. UPDATE : Modification sur la vraie table
+export const updateFraisScolaire = async (id, fraisData) => {
+  const { data, error } = await supabase
+    .from("frais_scolaires")
+    .update({
+      annee_id: fraisData.annee_id,
+      type_frais_id: fraisData.type_frais_id,
+      section_id: fraisData.section_id,
+      option_id: fraisData.option_id || null,
+      sexe: fraisData.sexe,
+      periode: fraisData.periode,
+      montant: parseFloat(fraisData.montant),
+      actif: fraisData.actif,
+      classe_id: fraisData.classe_id || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("frais_id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+// 4. DELETE : Suppression sur la vraie table
+export const deleteFraisScolaire = async (id, ) => {
+  const { error } = await supabase
+    .from("frais_scolaires")
+    .delete()
+    .eq("frais_id", id);
+
+  if (error) throw error;
+  return true;
+};
+
+
+
+
+/* ==========================================================
+   MODÈLE :  Creat FRAIS SCOLAIRES lors de l'inscription
+========================================================== */
+
 export const getObligationsByInscription = async (inscriptionId) => {
   const { data, error } = await supabase
     .from("obligations_financieres")
@@ -341,26 +466,68 @@ export const getObligationsByInscription = async (inscriptionId) => {
       )
     `)
     .eq("inscription_id", inscriptionId)
-    .gt("reste", 0)          // 👈 Ne récupérer que les frais restant à payer
-    .order("created_at");
+    .gt("reste", 0);
 
   if (error) throw error;
 
-  return data.map((item) => ({
+  // 1. Mappage des données
+  const obligationsFormatees = data.map((item) => ({
     obligation_id: item.obligation_id,
     frais_id: item.frais_scolaires?.frais_id,
-
     montant: Number(item.montant_du),
     periode: item.frais_scolaires?.periode,
     sexe: item.frais_scolaires?.sexe,
     types_frais: item.frais_scolaires?.types_frais,
-
     montant_du: Number(item.montant_du),
     montant_paye: Number(item.montant_paye || 0),
     reste: Number(item.reste || item.montant_du),
     statut: item.statut,
     mois: item.mois_scolaires,
   }));
+
+  // 2. Dictionnaire de tri de l'année scolaire (gère minuscules et majuscules)
+  const ordreScolaire = {
+    'annuel': 1,
+    'septembre': 2,
+    'Septembre': 2,
+    'octobre': 3,
+    'Octobre': 3,
+    'novembre': 4,
+    'Novembre': 4,
+    'décembre': 5,
+    'Décembre': 5,
+    'janvier': 6,
+    'Janvier': 6,
+    'février': 7,
+    'Février': 7,
+    'mars': 8,
+    'Mars': 8,
+    'avril': 9,
+    'Avril': 9,
+    'mai': 10,
+    'Mai': 10,
+    'juin': 11,
+    'Juin': 11
+  };
+
+  // 3. Application du tri combiné (Mois scolaire + Nom du frais)
+  obligationsFormatees.sort((a, b) => {
+    const periodeA = (a.periode || '').trim();
+    const periodeB = (b.periode || '').trim();
+
+    const indexA = ordreScolaire[periodeA] !== undefined ? ordreScolaire[periodeA] : 99;
+    const indexB = ordreScolaire[periodeB] !== undefined ? ordreScolaire[periodeB] : 99;
+
+    if (indexA !== indexB) {
+      return indexA - indexB;
+    }
+
+    const nomA = (a.types_frais?.nom || '').toLowerCase();
+    const nomB = (b.types_frais?.nom || '').toLowerCase();
+    return nomA.localeCompare(nomB);
+  });
+
+  return obligationsFormatees;
 };
 
 
@@ -639,7 +806,51 @@ export const getInscriptionById = async (inscriptionId) => {
 /* ==========================================================
    FRAIS D'UN ELEVE
 ========================================================== */
+// 1. Définir l'ordre logique de l'année scolaire (avec clés en minuscules et majuscules pour parer à tout)
+const ordreScolaire = {
+  'annuel': 1,
+  'septembre': 2,
+  'Septembre': 2,
+  'octobre': 3,
+  'Octobre': 3,
+  'novembre': 4,
+  'Novembre': 4,
+  'décembre': 5,
+  'Décembre': 5,
+  'janvier': 6,
+  'Janvier': 6,
+  'février': 7,
+  'Février': 7,
+  'mars': 8,
+  'Mars': 8,
+  'avril': 9,
+  'Avril': 9,
+  'mai': 10,
+  'Mai': 10,
+  'juin': 11,
+  'Juin': 11
+};
 
+// 2. Définir la fonction de tri combinée (mois scolaire + nom du type de frais)
+const trierParMoisScolaire = (a, b) => {
+  const periodeA = (a.periode || '').trim();
+  const periodeB = (b.periode || '').trim();
+
+  const indexA = ordreScolaire[periodeA] !== undefined ? ordreScolaire[periodeA] : 99;
+  const indexB = ordreScolaire[periodeB] !== undefined ? ordreScolaire[periodeB] : 99;
+
+  // Si les périodes sont différentes, on trie par mois scolaire
+  if (indexA !== indexB) {
+    return indexA - indexB;
+  }
+
+  // Si c'est la même période, on trie par nom de type de frais par ordre alphabétique
+  const nomA = (a.types_frais?.nom || '').toLowerCase();
+  const nomB = (b.types_frais?.nom || '').toLowerCase();
+  return nomA.localeCompare(nomB);
+};
+
+// 3. Fonction principale getFraisEleve
 export const getFraisEleve = async (
   anneeId,
   sectionId,
@@ -666,8 +877,11 @@ export const getFraisEleve = async (
     .eq("classe_id", classeId)
     .eq("actif", true);
 
-  if (optionId) {
+  // Gestion propre de l'option (si elle existe ou si elle est nulle/maternelle)
+  if (optionId && optionId !== "null" && optionId !== "undefined") {
     query = query.or(`option_id.eq.${optionId},option_id.is.null`);
+  } else {
+    query = query.is("option_id", null);
   }
 
   const { data, error } = await query;
@@ -679,7 +893,8 @@ export const getFraisEleve = async (
 
   const sexeEleve = (sexe || "").trim().toLowerCase();
 
-  const resultat = data.filter((f) => {
+  // Filtrage par sexe
+  const resultat = (data || []).filter((f) => {
     const sexeFrais = (f.sexe || "").trim().toLowerCase();
 
     return (
@@ -688,10 +903,15 @@ export const getFraisEleve = async (
     );
   });
 
-  console.log("RESULTAT =", resultat);
+  // Application du tri par mois scolaire et ordre alphabétique
+  resultat.sort(trierParMoisScolaire);
+
+  console.log("RESULTAT TRIÉ =", resultat);
 
   return resultat;
 };
+
+
 /* ==========================================================
    NUMERO DE RECU
 ========================================================== */
@@ -869,44 +1089,66 @@ export const getrechercherInscription = async (q) => {
 
   const recherche = q.trim();
 
-  const { data, error } = await supabase
+  // 1. Rechercher les élèves dans la vue globale (par nom, post-nom, prénom ou numéro)
+  const { data: eleves, error: errorEleves } = await supabase
     .from("vue_eleves_complet")
-    .select(`
-      eleve_id,
-      inscription_id,
-      numero_inscription,
-
-      nom,
-      post_nom,
-      prenom,
-      sexe,
-
-      annee_id,
-      annee_scolaire,
-
-      section_id,
-      nom_section,
-
-      option_id,
-      nom_option,
-
-      classe_id,
-      nom_classe
-    `)
+    .select("*")
     .or(
       [
         `nom.ilike.%${recherche}%`,
         `post_nom.ilike.%${recherche}%`,
         `prenom.ilike.%${recherche}%`,
-        `numero_inscription.ilike.%${recherche}%`
+        `numero_inscription.ilike.%${recherche}%`,
       ].join(",")
     )
     .order("nom")
     .limit(50);
 
-  if (error) throw error;
+  if (errorEleves) throw errorEleves;
+  if (!eleves || eleves.length === 0) return [];
 
-  return data;
+  // Extraire les identifiants d'inscription des élèves trouvés
+  const inscriptionIds = eleves.map((e) => e.inscription_id);
+
+  // 2. Récupérer leurs obligations financières associées
+  const { data: obligations, error: errorObligations } = await supabase
+    .from("vue_obligations_financieres")
+    .select("*")
+    .in("inscription_id", inscriptionIds);
+
+  if (errorObligations) throw errorObligations;
+
+  // 3. Fusionner les données et calculer les totaux financiers pour chaque élève trouvé
+  const resultat = eleves.map((eleve) => {
+    const obligationsEleve = (obligations || []).filter(
+      (o) => o.inscription_id === eleve.inscription_id
+    );
+
+    const totalDu = obligationsEleve.reduce(
+      (acc, curr) => acc + Number(curr.montant_du || 0),
+      0
+    );
+    const totalPaye = obligationsEleve.reduce(
+      (acc, curr) => acc + Number(curr.montant_paye || 0),
+      0
+    );
+    const totalReste = obligationsEleve.reduce(
+      (acc, curr) => acc + Number(curr.reste || 0),
+      0
+    );
+
+    return {
+      ...eleve,
+      obligations: obligationsEleve,
+      finances: {
+        total_du: totalDu,
+        total_paye: totalPaye,
+        total_reste: totalReste,
+      },
+    };
+  });
+
+  return resultat;
 };
 
 
@@ -1232,4 +1474,67 @@ export const updateDepense = async (
   }
 
   return data;
+};
+
+
+
+/* ==========================================================
+   ÉLÈVES ET OBLIGATIONS FINANCIÈRES PAR CLASSE
+========================================================== */
+
+export const getElevesPaiementsParClasse = async (classeId) => {
+  if (!classeId) return [];
+
+  // 1. Récupérer tous les élèves de la classe via la vue globale
+  const { data: eleves, error: errorEleves } = await supabase
+    .from("vue_eleves_complet")
+    .select("*")
+    .eq("classe_id", classeId)
+    .order("date_inscription", { ascending: false });
+
+  if (errorEleves) throw errorEleves;
+  if (!eleves || eleves.length === 0) return [];
+
+  // Extraire les identifiants d'inscription de ces élèves
+  const inscriptionIds = eleves.map((e) => e.inscription_id);
+
+  // 2. Récupérer leurs obligations financières associées
+  const { data: obligations, error: errorObligations } = await supabase
+    .from("vue_obligations_financieres")
+    .select("*")
+    .in("inscription_id", inscriptionIds);
+
+  if (errorObligations) throw errorObligations;
+
+  // 3. Fusionner les données et calculer les totaux financiers
+  const resultat = eleves.map((eleve) => {
+    const obligationsEleve = (obligations || []).filter(
+      (o) => o.inscription_id === eleve.inscription_id
+    );
+
+    const totalDu = obligationsEleve.reduce(
+      (acc, curr) => acc + Number(curr.montant_du || 0),
+      0
+    );
+    const totalPaye = obligationsEleve.reduce(
+      (acc, curr) => acc + Number(curr.montant_paye || 0),
+      0
+    );
+    const totalReste = obligationsEleve.reduce(
+      (acc, curr) => acc + Number(curr.reste || 0),
+      0
+    );
+
+    return {
+      ...eleve,
+      obligations: obligationsEleve,
+      finances: {
+        total_du: totalDu,
+        total_paye: totalPaye,
+        total_reste: totalReste,
+      },
+    };
+  });
+
+  return resultat;
 };

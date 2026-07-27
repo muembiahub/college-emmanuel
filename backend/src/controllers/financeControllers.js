@@ -1,6 +1,16 @@
 import {
   getAnneesScolaires,
   getAnneeScolaireById,
+  getTypesFrais,
+
+  // frais scolaires
+  getFraisScolaires,
+  getFraisScolaireById,
+  createFraisScolaire,
+  updateFraisScolaire,
+  deleteFraisScolaire,
+
+  // inscriptions
 
   getObligationsByIds,
   updateObligationPaiement,
@@ -34,6 +44,7 @@ import {
   getNombreDebiteurs,
   getEvolutionRecettesMensuelles,
   getRepartitionModesPaiement,
+  getElevesPaiementsParClasse,
 
   createDepense,
   getDepenses,
@@ -850,6 +861,7 @@ export const rechercherEleve = async (req, res) => {
       });
     }
 
+    
     const eleves = await getrechercherInscription(q);
 
     res.status(200).json({
@@ -862,6 +874,41 @@ export const rechercherEleve = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+
+
+
+/* ==========================================================
+   CONTRÔLEUR : RÉCUPÉRER LES ÉLÈVES ET LEURS FINANCES PAR CLASSE
+========================================================== */
+
+export const afficherElevesPaiementsParClasse = async (req, res) => {
+  try {
+    const { classeId } = req.params;
+
+    if (!classeId) {
+      return res.status(400).json({
+        success: false,
+        message: "L'identifiant de la classe (classeId) est obligatoire.",
+      });
+    }
+
+    // Appel de la fonction du modèle
+    const elevesFinances = await getElevesPaiementsParClasse(classeId);
+
+    return res.status(200).json({
+      success: true,
+      count: elevesFinances.length,
+      data: elevesFinances,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des élèves par classe :", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Erreur interne du serveur.",
     });
   }
 };
@@ -923,3 +970,7 @@ export const modifierDepense = async (req, res) => {
     });
   }
 };
+
+
+
+

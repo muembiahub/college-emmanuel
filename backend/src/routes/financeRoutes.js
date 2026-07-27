@@ -40,6 +40,7 @@ import {
   /* ==========================================================
      DETAILS DES PAIEMENTS
   ========================================================== */
+  afficherElevesPaiementsParClasse,
   afficherDetailsPaiement,
   creerDetailPaiement,
   supprimerDetailPaiement,
@@ -128,6 +129,9 @@ router.put(
 /* ==========================================================
    DETAILS DES PAIEMENTS
 ========================================================== */
+
+
+router.get("/classe/:classeId", afficherElevesPaiementsParClasse);
 
 router.get(
   "/paiements/:paiementId/details",

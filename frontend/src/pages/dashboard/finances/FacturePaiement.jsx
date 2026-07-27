@@ -1,12 +1,10 @@
 import React, { useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Printer, Download, Share2 } from "lucide-react";
-import { useReactToPrint } from "react-to-print";
-import html2canvas from "html2canvas";
 
 /**
  * Composant FacturePaiement - Format Ticket Thermique (80mm)
- * Avec Filigrane et Bordure stylisée.
+ * Filigrane corrigé pour l'impression.
  */
 export default function FacturePaiement() {
   const { state } = useLocation();
@@ -38,74 +36,99 @@ export default function FacturePaiement() {
   const numRecu =
     paiement.paiement?.numero_recu || paiement.numero_recu || "REC-000";
 
-  // --- GESTION DE L'IMPRESSION ISOLÉE & CENTRÉE ---
-  const handlePrint = useReactToPrint({
-    contentRef: ticketRef,
-    documentTitle: `Recu_${numRecu}_${eleve.nom || "Eleve"}`,
-    pageStyle: `
-      @page {
-        size: 80mm auto;
-        margin: 0;
-      }
-      @media print {
-        html, body {
-          width: 80mm !important;
-          margin: 0 auto !important;
-          padding: 0 !important;
-          background: #ffffff !important;
-          display: flex !important;
-          justify-content: center !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
+  // --- IMPRESSION NATIVE AVEC CORRECTIF CSS FILIGRANE ---
+  const handlePrint = () => {
+    const printContent = ticketRef.current.innerHTML;
+    const originalContent = document.body.innerHTML;
+
+    document.body.innerHTML = `
+      <style>
+        @page {
+          size: 80mm auto;
+          margin: 0;
         }
-        .receipt-container {
-          width: 100% !important;
-          max-width: 80mm !important;
-          box-shadow: none !important;
-          border: 1px solid #000000 !important; /* Bordure d'impression propre */
-          padding: 4mm !important;
-          margin: 0 auto !important;
-          box-sizing: border-box !important;
-          position: relative !important;
-          overflow: hidden !important;
+        body {
+          margin: 0;
+          padding: 0;
+          background: white;
+          font-family: monospace;
+          display: flex;
+          justify-content: center;
         }
-        .watermark {
+        .print-wrapper {
+          width: 80mm;
+          box-sizing: border-box;
+          padding: 4mm;
+          position: relative;
+          background: white;
+        }
+        /* Correction stricte de la taille du filigrane à l'impression */
+        .print-wrapper .watermark {
           position: absolute !important;
           top: 50% !important;
           left: 50% !important;
           transform: translate(-50%, -50%) !important;
-          width: 65% !important;
+          width: 45mm !important;
+          max-width: 45mm !important;
+          height: auto !important;
           opacity: 0.08 !important;
           filter: grayscale(100%) !important;
           z-index: 0 !important;
           pointer-events: none !important;
         }
-        .content-layer {
+        .print-wrapper .content-layer {
           position: relative !important;
           z-index: 10 !important;
         }
-        .no-print {
-          display: none !important;
-        }
-      }
-    `,
-  });
+      </style>
+      <div class="print-wrapper">
+        ${printContent}
+      </div>
+    `;
 
-  // --- TÉLÉCHARGER LE TICKET EN IMAGE ---
-  const handleDownload = async () => {
+    window.print();
+    document.body.innerHTML = originalContent;
+    window.location.reload();
+  };
+
+  // --- TÉLÉCHARGER LE TICKET EN HTML ---
+  const handleDownload = () => {
     if (!ticketRef.current) return;
-    try {
-      const canvas = await html2canvas(ticketRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-      });
-      const link = document.createElement("a");
-      link.download = `Recu_${numRecu}_${eleve.nom || "Eleve"}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    } catch (err) {
-      console.error("Erreur lors du téléchargement :", err);
-    }
+    
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Recu_${numRecu}</title>
+          <style>
+            body { font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; background: #fff; color: #000; }
+            .receipt { border: 2px solid #000; padding: 12px; position: relative; }
+            .text-center { text-align: center; }
+            .flex { display: flex; justify-content: space-between; }
+            .bold { font-weight: bold; }
+            .border-b { border-bottom: 1px dashed #000; margin: 8px 0; }
+            .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 45mm; opacity: 0.08; filter: grayscale(100%); z-index: 0; pointer-events: none; }
+            .content-layer { position: relative; z-index: 10; }
+          </style>
+        </head>
+        <body>
+          <div class="receipt">
+            ${ticketRef.current.innerHTML}
+          </div>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Recu_${numRecu}_${eleve.nom || "Eleve"}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // --- ENVOI WHATSAPP ---
@@ -139,7 +162,7 @@ Merci de votre confiance !`;
       <div className="no-print flex flex-col w-full max-w-[80mm] mb-4 gap-2 font-sans">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white text-slate-700 font-medium text-xs shadow-sm hover:bg-slate-50 transition-colors cursor-pointer w-max"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white text-slate-700 font-medium text-xs shadow-sm hover:bg-slate-50 transition-colors cursor-pointer w-max border border-slate-200"
         >
           <ArrowLeft size={16} /> Retour
         </button>
@@ -157,7 +180,7 @@ Merci de votre confiance !`;
           <button
             onClick={handleDownload}
             className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-slate-800 text-white font-bold text-[11px] shadow hover:bg-slate-900 transition-colors cursor-pointer"
-            title="Télécharger l'image"
+            title="Télécharger le reçu"
           >
             <Download size={16} />
             <span>Télécharger</span>
@@ -179,17 +202,17 @@ Merci de votre confiance !`;
         ref={ticketRef}
         className="receipt-container relative overflow-hidden w-full max-w-[80mm] bg-white p-4 shadow-xl border-2 border-slate-900 rounded-sm"
       >
-        {/* FILIGRANE (Watermark Logo) */}
+        {/* FILIGRANE (Watermark Logo dimensionné en millimètres pour bloquer l'agrandissement) */}
         <img
           src={SCHOOL_LOGO}
           alt=""
-          className="watermark absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] opacity-[0.08] grayscale pointer-events-none z-0"
+          className="watermark absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[45mm] max-w-[45mm] opacity-[0.08] grayscale pointer-events-none z-0"
         />
 
         {/* CONTENU DU TICKET */}
         <div className="content-layer relative z-10 border border-dashed border-slate-400 p-2">
           
-          {/* EN-TÊTE ÉCOLE */}
+          {/* EN-TÊTE ÉCOLE AVEC LOGO */}
           <div className="text-center space-y-1">
             <img
               src={SCHOOL_LOGO}

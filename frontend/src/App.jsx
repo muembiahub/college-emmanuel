@@ -58,6 +58,7 @@ import Homepage from "./pages/dashboard/finances/FinancesHomepage.jsx";
 import PaiementsEleves from "./pages/dashboard/finances/PaiementsEleves.jsx";
 import FacturePaiement from "./pages/dashboard/finances/FacturePaiement.jsx";
 import PaiementFicheEleves from "./pages/dashboard/finances/PaiementFicheEleves.jsx";
+import ConfigurationFrais from "./pages/dashboard/finances/ConfigurationFrais.jsx"
 
 /* ===========================
    Personnel
@@ -205,6 +206,7 @@ export default function App() {
               <Route path="finances/factureseleves" element= {<FacturePaiement/>} />
               <Route path="finances/paiementficheeleves" element={<PaiementFicheEleves />} />
               <Route path="finances/rapports" element={<RapportsFinance />} />
+              <Route path="finances/configurationfrais" element={<ConfigurationFrais />} />
 
               {/* Personnel */}
 

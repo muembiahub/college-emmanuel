@@ -7,6 +7,7 @@ import {
   getSections,
   getOptions,
   getClasses,
+  getClasseById,
   getParalleles,
   createInscription,
   getEleves,
@@ -178,6 +179,21 @@ export const listerClasses = async (req, res) => {
     });
   }
 };
+export const listerClasseById = async (req, res) => {
+  try {
+    const { id } = req.query;
+
+    const classe = await getClasseById(id);
+
+    res.json(classe);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: "Erreur serveur.",
+    });
+  }
+}
 
 export const listerParalleles = async (req, res) => {
   try {

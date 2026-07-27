@@ -12,12 +12,6 @@ import {
   Check,
 } from "lucide-react";
 
-const PERIOD_LABELS = {
-  septembre_decembre: "Septembre - Décembre",
-  janvier_mai: "Janvier - Mai",
-  annuel: "Annuel",
-};
-
 const InfoCard = ({ label, value, icon: Icon }) => (
   <div className="group relative rounded-xl bg-white/5 border border-white/10 p-3.5 sm:p-4 backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:border-indigo-500/30">
     <div className="flex items-center gap-2 mb-1">
@@ -35,33 +29,23 @@ const InfoCard = ({ label, value, icon: Icon }) => (
 export default function RechercheEleve() {
   const navigate = useNavigate();
 
-  // États de recherche
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [resultats, setResultats] = useState([]);
   
-  // États de sélection
   const [eleve, setEleve] = useState(null);
   const [frais, setFrais] = useState([]);
   const [chargementFrais, setChargementFrais] = useState(false);
   const [selection, setSelection] = useState([]);
 
-  /**
-   * Fonction de recherche
-   */
   const effectuerRecherche = useCallback(async (searchQuery, signal) => {
-    if (searchQuery.trim().length < 2) {
-      setResultats([]);
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
 
       const res = await fetch(
-        `/finance/rechercher?q=${encodeURIComponent(searchQuery)}`,
+        `/finance/rechercher?q=${encodeURIComponent(searchQuery.trim())}`,
         { signal }
       );
 
@@ -84,6 +68,15 @@ export default function RechercheEleve() {
   }, []);
 
   useEffect(() => {
+    if (eleve !== null) {
+      return;
+    }
+
+    if (!query || query.trim().length < 2) {
+      setResultats([]);
+      return;
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => {
       effectuerRecherche(query, controller.signal);
@@ -93,14 +86,12 @@ export default function RechercheEleve() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, effectuerRecherche]);
+  }, [query, eleve, effectuerRecherche]);
 
-  /**
-   * Charger les frais
-   */
   const chargerFrais = async (item) => {
     try {
       setChargementFrais(true);
+      setError(null);
       const res = await fetch(
         `/finance/obligations/${item.inscription_id}`
       );
@@ -111,7 +102,7 @@ export default function RechercheEleve() {
         setSelection([]); 
       } else {
         setFrais([]);
-        setError(data.message);
+        setError(data.message || "Aucun frais trouvé.");
       }
     } catch (err) {
       setFrais([]);
@@ -121,9 +112,6 @@ export default function RechercheEleve() {
     }
   };
 
-  /**
-   * Gestion de la sélection des frais
-   */
   const toggleFrais = (id) => {
     setSelection((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -141,7 +129,7 @@ export default function RechercheEleve() {
   const choisirEleve = (item) => {
     setEleve(item);
     setResultats([]);
-    setQuery(`${item.nom} ${item.post_nom} ${item.prenom}`);
+    setQuery(`${item.nom} ${item.post_nom || ""} ${item.prenom || ""}`.trim());
     chargerFrais(item);
   };
 
@@ -154,9 +142,6 @@ export default function RechercheEleve() {
     setError(null);
   };
 
-  /**
-   * Calcul du total
-   */
   const totalSelectionne = useMemo(() => {
     return frais
       .filter((f) => selection.includes(f.obligation_id))
@@ -165,14 +150,12 @@ export default function RechercheEleve() {
 
   return (
     <div className="relative min-h-screen p-3 sm:p-5 lg:p-6 text-slate-100">
-      {/* Éléments décoratifs en arrière-plan */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-1/3 w-72 lg:w-96 h-72 lg:h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-10 right-1/3 w-72 lg:w-96 h-72 lg:h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-10 left-1/3 w-72 lg:w-96 h-72 lg:h-96 bg-indigo-500/15 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-10 right-1/3 w-72 lg:w-96 h-72 lg:h-96 bg-purple-500/15 rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto space-y-4 lg:space-y-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -185,14 +168,13 @@ export default function RechercheEleve() {
           {eleve && (
             <button 
               onClick={reinitialiser}
-              className="self-start sm:self-auto px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg flex items-center gap-1.5 transition-all"
+              className="self-start sm:self-auto px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <X size={14} /> Nouvelle recherche
             </button>
           )}
         </div>
 
-        {/* Barre de recherche */}
         <div className="relative group">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
             <Search size={18} className="text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
@@ -201,7 +183,14 @@ export default function RechercheEleve() {
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              if (eleve) {
+                setEleve(null);
+                setFrais([]);
+                setSelection([]);
+              }
+            }}
             placeholder="Nom, prénom ou numéro d'inscription..."
             className="w-full rounded-xl sm:rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl py-3 sm:py-3.5 pl-10 pr-10 shadow-lg shadow-indigo-500/5 text-white placeholder-slate-400 text-xs sm:text-sm outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
           />
@@ -209,20 +198,19 @@ export default function RechercheEleve() {
           <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center gap-2">
             {loading && <Loader2 size={18} className="text-indigo-400 animate-spin" />}
             {query && !loading && (
-              <button onClick={() => setQuery("")} className="text-slate-400 hover:text-white transition-colors">
+              <button onClick={reinitialiser} className="text-slate-400 hover:text-white transition-colors cursor-pointer">
                 <X size={18} />
               </button>
             )}
           </div>
 
-          {/* Liste des résultats (Dropdown) */}
           {resultats.length > 0 && (
             <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-white/20 bg-slate-900/95 backdrop-blur-2xl shadow-2xl shadow-black/50 divide-y divide-white/5 max-h-[350px] overflow-y-auto">
               {resultats.map((item) => (
                 <button
                   key={item.inscription_id}
                   onClick={() => choisirEleve(item)}
-                  className="flex w-full items-center justify-between p-3.5 sm:p-4 text-left hover:bg-white/10 transition group"
+                  className="flex w-full items-center justify-between p-3.5 sm:p-4 text-left hover:bg-white/10 transition group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className="rounded-xl bg-indigo-500/20 border border-indigo-500/30 p-2.5 text-indigo-300 group-hover:scale-105 transition-transform">
@@ -233,14 +221,20 @@ export default function RechercheEleve() {
                         {item.nom} {item.post_nom} {item.prenom}
                       </h3>
                       <p className="text-[11px] text-slate-400 font-mono">
-                        {item.numero_inscription}
+                        {item.numero_inscription} - <span className="text-slate-300">{item.nom_classe}</span>
                       </p>
                     </div>
                   </div>
-                  <div className="hidden sm:block text-right mr-3">
-                    <p className="text-xs font-semibold text-slate-200">{item.nom_classe}</p>
-                    <p className="text-[10px] text-slate-400 uppercase">{item.nom_option}</p>
+
+                  <div className="text-right mr-2">
+                    {item.finances?.total_reste !== undefined && (
+                      <p className="text-xs font-bold text-emerald-400">
+                        Reste : {Number(item.finances.total_reste).toLocaleString("fr-FR")} FC
+                      </p>
+                    )}
+                    <p className="text-[10px] text-slate-400 uppercase">{item.nom_option || "Général"}</p>
                   </div>
+
                   <ChevronRight size={16} className="text-slate-400 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
                 </button>
               ))}
@@ -267,22 +261,34 @@ export default function RechercheEleve() {
           </div>
         ) : (
           <div className="space-y-4 lg:space-y-6">
-            {/* Profil Élève */}
             <section className="rounded-xl lg:rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 p-4 lg:p-5 shadow-xl">
               <div className="flex items-center gap-2.5 mb-3 lg:mb-4">
                 <div className="h-5 w-1 bg-indigo-500 rounded-full" />
                 <h2 className="text-xs sm:text-sm lg:text-base font-bold text-white">Profil de l'élève</h2>
               </div>
-              <div className="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+              <div className="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                 <InfoCard label="N° Inscription" value={eleve.numero_inscription} />
                 <InfoCard label="Classe" value={eleve.nom_classe} />
                 <InfoCard label="Section" value={eleve.nom_section} />
-                <InfoCard label="Option" value={eleve.nom_option} />
+                <InfoCard label="Option" value={eleve.nom_option || "Aucune"} />
                 <InfoCard label="Année" value={eleve.annee_scolaire} />
+                
+                {/* Lecture ciblée depuis l'objet finances de la recherche */}
+                <InfoCard 
+                  label="Montant Dû" 
+                  value={eleve.finances?.total_du !== undefined ? `${Number(eleve.finances.total_du).toLocaleString("fr-FR")} FC` : "-"} 
+                />
+                <InfoCard 
+                  label="Total Payé" 
+                  value={eleve.finances?.total_paye !== undefined ? `${Number(eleve.finances.total_paye).toLocaleString("fr-FR")} FC` : "-"} 
+                />
+                <InfoCard 
+                  label="Reste à Payer" 
+                  value={eleve.finances?.total_reste !== undefined ? `${Number(eleve.finances.total_reste).toLocaleString("fr-FR")} FC` : "-"} 
+                />
               </div>
             </section>
 
-            {/* Frais applicables */}
             <section className="rounded-xl lg:rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 p-4 lg:p-5 shadow-xl">
               <div className="mb-4 flex flex-row items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
@@ -293,7 +299,7 @@ export default function RechercheEleve() {
                 {frais.length > 0 && (
                   <button 
                     onClick={selectionnerTout}
-                    className="text-xs font-semibold text-slate-300 hover:text-indigo-400 transition-colors flex items-center gap-1.5"
+                    className="text-xs font-semibold text-slate-300 hover:text-indigo-400 transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
                     <CheckCircle2 size={14} />
                     {selection.length === frais.length ? "Tout désélectionner" : "Tout sélectionner"}
@@ -334,10 +340,12 @@ export default function RechercheEleve() {
                           <div>
                             <h3 className={`text-xs sm:text-sm font-bold transition-colors ${isSelected ? "text-indigo-200" : "text-white"}`}>
                               {f.types_frais?.nom}
+                              {f.periode && f.periode.toLowerCase() !== 'annuel' && (
+                                <span className="font-normal opacity-90">
+                                  {` - ${f.periode}`}
+                                </span>
+                              )}
                             </h3>
-                            <p className="text-[11px] text-slate-400">
-                              {PERIOD_LABELS[f.periode] || f.periode} • {f.sexe}
-                            </p>
                           </div>
                         </div>
 
@@ -352,7 +360,6 @@ export default function RechercheEleve() {
                 </div>
               )}
 
-              {/* Barre de résumé de paiement */}
               <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-4 p-4 lg:p-5 rounded-xl bg-slate-900/80 border border-white/10 backdrop-blur-xl shadow-2xl">
                 <div className="text-center sm:text-left">
                   <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
@@ -376,7 +383,7 @@ export default function RechercheEleve() {
                         })),
                     }
                   })}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/25 active:scale-95"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/25 active:scale-95 cursor-pointer"
                 >
                   Continuer vers le paiement
                   <ChevronRight size={16} />

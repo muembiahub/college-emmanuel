@@ -110,7 +110,7 @@ export const getSections = async () => {
   const { data, error } = await supabase
     .from("sections")
     .select("*")
-    .order("nom_section");
+    .order("nom_section",{ ascending: true });
 
   if (error) throw error;
 
@@ -128,7 +128,7 @@ export const getOptions = async (section_id = null) => {
     .from("options")
     .select("*")
     .eq("section_id", section_id)
-    .order("ordre");
+    .order("nom_option",{ ascending: true });
 
   if (error) throw error;
 
@@ -139,6 +139,7 @@ export const getOptions = async (section_id = null) => {
    CLASSES
 ========================================================== */
 
+
 export const getClasses = async (option_id = null) => {
   console.log("Recherche avec :", option_id);
 
@@ -147,7 +148,8 @@ export const getClasses = async (option_id = null) => {
   const { data, error } = await supabase
     .from("classes")
     .select("*")
-    .eq("option_id", option_id);
+    .eq("option_id", option_id)
+    .order("nom_classe",{ ascending: true });
 
   console.log("Résultat Supabase :", data);
 
@@ -155,6 +157,17 @@ export const getClasses = async (option_id = null) => {
 
   return data;
 };
+export const getClasseById = async (classe_id = null) => {
+  if (!classe_id) return [];
+
+  const { data, error } = await supabase
+    .from("classes")
+    .select("*")
+    .eq("classe_id", classe_id)
+    .order("nom_classe",{ ascending: true });
+
+  console.log("Résultat Supabase :", data);
+}
 /* ==========================================================
    PARALLELES
 ========================================================== */

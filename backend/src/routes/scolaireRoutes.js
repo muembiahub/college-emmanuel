@@ -12,6 +12,7 @@ import {
   listerSections,
   listerOptions,
   listerClasses,
+  listerClasseById,
   listerParalleles,
 
   /* ===========================
@@ -62,6 +63,7 @@ router.get("/options", listerOptions);
 // Toutes les classes d'une option
 // GET /dashboard/classes?option_id=UUID
 router.get("/classes", listerClasses);
+router.get("/classes/:id", listerClasseById);
 
 // Tous les parallèles d'une classe
 // GET /dashboard/paralleles?classe_id=UUID

@@ -77,6 +77,7 @@ export default function DashboardMenu({ isMenuOpen, setIsMenuOpen }) {
         { name: "Paie Employés", path: "/dashboard/finances/paiements-employes", icon: BriefcaseBusiness },
         { name: "Journal des dépenses", path: "/dashboard/finances/depenses", icon: ReceiptText },
         { name: "Rapports financiers", path: "/dashboard/finances/rapports", icon: FileText },
+        { name: "Gestion des frais", path: "/dashboard/finances/configurationfrais", icon: Settings },
        ],
     },
     {
@@ -174,7 +175,7 @@ export default function DashboardMenu({ isMenuOpen, setIsMenuOpen }) {
           <div className={`flex-1 ${!isMenuOpen && "lg:hidden"}`}>
             <h1 className="text-sm font-bold text-white truncate">Collège Emmanuel</h1>
             <p className="text-xs text-slate-400 flex items-center gap-1">
-              <MapPin size={11} /> Kinshasa, RDC
+              <MapPin size={11} /> Lubumbashi, RDC
             </p>
           </div>
         </div>
