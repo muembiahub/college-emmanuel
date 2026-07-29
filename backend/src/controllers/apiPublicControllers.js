@@ -38,3 +38,19 @@ export const createContactMessage = async (req, res, next) => {
   }
 };
 
+export const listerAllMessages = async (req, res, next) => {
+  try {
+    const { data: contacts, error } = await supabase
+      .from("contact")
+      .select("*");
+
+    if (error) {
+      throw new Error("Erreur lors de la récupération des messages de contact");
+    }
+
+    res.status(200).json(contacts);
+  } catch (error) {
+    next(error);
+  }
+}
+

@@ -135,6 +135,19 @@ export const getOptions = async (section_id = null) => {
   return data;
 };
 
+// getall option without section Id 
+
+export const getAllOptions = async () => {
+  const { data, error } = await supabase
+    .from("options")
+    .select("*")
+    .order("nom_option",{ ascending: true });
+
+  if (error) throw error;
+
+  return data;
+}
+
 /* ==========================================================
    CLASSES
 ========================================================== */

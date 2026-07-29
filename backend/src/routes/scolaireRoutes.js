@@ -59,6 +59,8 @@ router.get("/sections", listerSections);
 // Toutes les options d'une section
 // GET /dashboard/options?section_id=UUID
 router.get("/options", listerOptions);
+// get all option without section id
+
 
 // Toutes les classes d'une option
 // GET /dashboard/classes?option_id=UUID

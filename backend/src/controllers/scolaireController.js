@@ -6,6 +6,7 @@ import {
   deleteNotification,
   getSections,
   getOptions,
+  getAllOptions,
   getClasses,
   getClasseById,
   getParalleles,
@@ -158,6 +159,19 @@ export const listerOptions = async (req, res) => {
     });
   }
 };
+
+export const listerAllOptions = async (req, res) => {
+  try{
+    const allOptions = await getAllOptions();
+    res.json(allOptions);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: "Erreur serveur.",
+    });
+  }
+}
 
 
 export const listerClasses = async (req, res) => {
