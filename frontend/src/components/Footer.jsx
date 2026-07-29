@@ -46,21 +46,21 @@ export default function Footer() {
 
 
               <li>
-                <a href="/programmes" className="flex items-center gap-2 hover:text-yellow-400 transition">
+                <a href="#" className="flex items-center gap-2 hover:text-yellow-400 transition">
                   <span className="material-symbols-outlined text-lg">
                     menu_book
                   </span>
-                  Filières
+                 Programmes
                 </a>
               </li>
 
 
               <li>
-                <a href="/enseignants" className="flex items-center gap-2 hover:text-yellow-400 transition">
+                <a href="#" className="flex items-center gap-2 hover:text-yellow-400 transition">
                   <span className="material-symbols-outlined text-lg">
-                    school
+                    people
                   </span>
-                  Enseignants
+                  Nos equipes
                 </a>
               </li>
 
@@ -197,7 +197,7 @@ export default function Footer() {
 
     <div className="flex flex-wrap justify-center gap-4">
       <a
-        href="/regles"
+        href="#"
         className="transition-colors hover:text-yellow-400"
       >
         Règles de confidentialité
@@ -206,7 +206,7 @@ export default function Footer() {
       <span className="hidden sm:inline text-white/40">|</span>
 
       <a
-        href="/mentions"
+        href="#"
         className="transition-colors hover:text-yellow-400"
       >
         Mentions légales
