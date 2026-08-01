@@ -38,7 +38,8 @@ window.fetch = (input, init = {}) => {
   }).then((response) => {
     if ((response.status === 401 || response.status === 403) && !String(url).includes("/login")) {
       localStorage.removeItem("token");
-      redirectToLogin();
+      // La redirection est désormais gérée par le composant ProtectedRoute
+      // ou par la logique de la page (ex: re-fetch après re-connexion)
     }
     return response;
   });

@@ -84,7 +84,7 @@ export function AuthProvider({ children }) {
         Empêche l'application de clignoter ou d'afficher des pages protégées 
         pendant que le serveur Express valide le token au démarrage
       */}
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

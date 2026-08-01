@@ -174,23 +174,23 @@ export default function App() {
         <Suspense fallback={<LoadingFallback />}>
         <Routes>
 
-          <Route element={<ProtectedRoute />}>
-            {/* =======================
-                Routes protégées
-            ======================= */}
+          {/* =======================
+              Routes publiques
+          ======================= */}
 
-            <Route element={<PublicLayout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/login" element={<Auth />} />
-              <Route path="*" element={<NotFound />} />
-            </Route>
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/login" element={<Auth />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
 
-            {/* =======================
-                Dashboard
-            ======================= */}
+          {/* =======================
+              Dashboard protégé
+          ======================= */}
 
-            <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<ProtectedRoute />}>
+            <Route element={<DashboardLayout />}>
 
               <Route index element={<Dashboard />} />
               <Route path="profiles" element={<Profile />} />
