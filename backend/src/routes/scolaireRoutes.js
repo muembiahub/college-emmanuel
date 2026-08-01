@@ -1,4 +1,5 @@
 import express from "express";
+import { requireApiAuth } from "../middlewares/apiRequireAuth.js";
 
 import {
   /* ===========================
@@ -42,6 +43,8 @@ import {
 } from "../controllers/scolaireController.js";
 
 const router = express.Router();
+
+router.use(requireApiAuth);
 
 /* ==========================================================
    DASHBOARD

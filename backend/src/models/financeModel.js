@@ -539,35 +539,19 @@ export const getObligationsByInscription = async (inscriptionId) => {
 
 export const getPaiements = async () => {
   const { data, error } = await supabase
-    .from("paiements")
-    .select(`
-      *,
-      inscriptions(
-        numero_inscription,
-        eleve_id,
-        annee_scolaire
-      )
-    `)
+    .from("vue_rapport_paiements")
+    .select("*")
     .order("date_paiement", { ascending: false });
 
   if (error) throw error;
 
   return data;
 };
-
 export const getPaiementById = async (paiementId) => {
   const { data, error } = await supabase
-    .from("paiements")
-    .select(`
-      *,
-      inscriptions(
-        numero_inscription,
-        eleve_id,
-        annee_scolaire
-      )
-    `)
-    .eq("paiement_id", paiementId)
-    .single();
+    .from("vue_rapport_paiements")
+    .select("*")
+    .eq("paiement_id", paiementId);
 
   if (error) throw error;
 
@@ -679,25 +663,6 @@ export const rembourserPaiement = async (paiementId) => {
 /* ==========================================================
    DETAILS DES PAIEMENTS
 ========================================================== */
-
-export const getDetailsPaiement = async (paiementId) => {
-  const { data, error } = await supabase
-    .from("details_paiement")
-    .select(`
-      *,
-      frais_scolaires(
-        montant,
-        periode,
-        sexe,
-        types_frais(nom)
-      )
-    `)
-    .eq("paiement_id", paiementId);
-
-  if (error) throw error;
-
-  return data;
-};
 
 export const createDetailPaiement = async (details) => {
   const { data, error } = await supabase

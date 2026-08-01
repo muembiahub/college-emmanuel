@@ -16,10 +16,10 @@ import {
   updateObligationPaiement,
   getObligationsByInscription,
 
-  getDetailsPaiement,
+ 
   createDetailPaiement,
   deleteDetailPaiement,
-
+  getPaiements,
   getPaiementsByInscription,
   getMontantPaye,
 
@@ -403,13 +403,13 @@ export const afficherPaiement = async (req, res) => {
 
 export const enregistrerPaiement = async (req, res) => {
   try {
-   const {
-  inscription_id,
-  montant_verse,
-  mode_paiement,
-  reference_transaction = null,
-  observation = "",
-} = req.body;
+    const {
+      inscription_id,
+      montant_verse,
+      mode_paiement,
+      reference_transaction = null,
+      observation = "",
+    } = req.body;
 
     /* ==========================================================
        VALIDATION
@@ -436,117 +436,131 @@ export const enregistrerPaiement = async (req, res) => {
       });
     }
 
+    /* ==========================================================
+       RECUPERATION DES OBLIGATIONS
+    ========================================================== */
 
-  
+    const obligationsDB = await getObligationsByInscription(inscription_id);
 
-  /* ==========================================================
-   RECUPERATION DES OBLIGATIONS A PAYER
-========================================================== */
+    if (!obligationsDB.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Aucune obligation à payer.",
+      });
+    }
 
-const obligationsDB = await getObligationsByInscription(
-  inscription_id
-);
+    let resteARepartir = Number(montant_verse);
+    let montant_total = 0;
+    const details = [];
 
-if (!obligationsDB.length) {
-  return res.status(400).json({
-    success: false,
-    message: "Aucune obligation à payer.",
-  });
-}
+    /* ==========================================================
+       REPARTITION AUTOMATIQUE
+    ========================================================== */
 
-let resteARepartir = Number(montant_verse);
-let montant_total = 0;
-const details = [];
+    for (const obligation of obligationsDB) {
+      if (resteARepartir <= 0) break;
 
-/* ==========================================================
-   REPARTITION AUTOMATIQUE DU MONTANT
-========================================================== */
+      const resteObligation = Number(obligation.reste);
 
-for (const obligation of obligationsDB) {
-  if (resteARepartir <= 0) break;
+      const montantPaye = Math.min(
+        resteARepartir,
+        resteObligation
+      );
 
-  const resteObligation = Number(obligation.reste);
+      montant_total += montantPaye;
 
-  const montantPaye = Math.min(
-    resteARepartir,
-    resteObligation
-  );
+      details.push({
+        obligation_id: obligation.obligation_id,
+        montant_paye: montantPaye,
+      });
 
-  montant_total += montantPaye;
+      resteARepartir -= montantPaye;
+    }
 
-  details.push({
-  obligation_id: obligation.obligation_id,
-  montant_paye: montantPaye,
-  periode: obligation.periode,
-  mois: obligation.mois,
-  types_frais: obligation.types_frais,
-});
+    /* ==========================================================
+       CREATION DU PAIEMENT
+    ========================================================== */
 
-  resteARepartir -= montantPaye;
-}
+    const numero_recu = await generateNumeroRecu();
 
-/* ==========================================================
-   CREATION DU PAIEMENT
-========================================================== */
+    const paiement = await createPaiement({
+      inscription_id,
+      numero_recu,
+      montant_verse,
+      montant_total,
+      mode_paiement,
+      reference_transaction,
+      observation,
+    });
 
-const numero_recu = await generateNumeroRecu();
+    /* ==========================================================
+       DETAILS DU PAIEMENT
+    ========================================================== */
 
-const paiement = await createPaiement({
-  inscription_id,
-  numero_recu,
-  montant_verse: Number(montant_verse),
-  montant_total,
-  mode_paiement,
-  reference_transaction,
-  observation,
-});
+    await createDetailPaiement(
+      details.map((detail) => ({
+        paiement_id: paiement.paiement_id,
+        obligation_id: detail.obligation_id,
+        montant_paye: detail.montant_paye,
+      }))
+    );
 
-/* ==========================================================
-   ENREGISTREMENT DES DETAILS
-========================================================== */
+    /* ==========================================================
+       MISE A JOUR DES OBLIGATIONS
+    ========================================================== */
 
-await createDetailPaiement(
-  details.map((d) => ({
-    paiement_id: paiement.paiement_id,
-    obligation_id: d.obligation_id,
-    montant_paye: d.montant_paye,
-  }))
-);
+    for (const detail of details) {
+      const obligation = obligationsDB.find(
+        (o) => o.obligation_id === detail.obligation_id
+      );
 
-/* ==========================================================
-   MISE A JOUR DES OBLIGATIONS
-========================================================== */
+      const nouveauMontantPaye =
+        Number(obligation.montant_paye) +
+        Number(detail.montant_paye);
 
-for (const detail of details) {
-  const obligation = obligationsDB.find(
-    (o) => o.obligation_id === detail.obligation_id
-  );
+      const nouveauReste = Math.max(
+        Number(obligation.montant_du) -
+          nouveauMontantPaye,
+        0
+      );
 
-  const nouveauMontantPaye =
-    Number(obligation.montant_paye) +
-    Number(detail.montant_paye);
+      const statut =
+        nouveauReste === 0
+          ? "paye"
+          : nouveauMontantPaye > 0
+          ? "partiel"
+          : "impaye";
 
-  const nouveauReste = Math.max(
-    Number(obligation.montant_du) -
-      nouveauMontantPaye,
-    0
-  );
+      await updateObligationPaiement(
+        obligation.obligation_id,
+        nouveauMontantPaye,
+        nouveauReste,
+        statut
+      );
+    }
 
-  let statut = "partiel";
+    /* ==========================================================
+       RECUPERATION DU RAPPORT
+       (future vue_rapport_paiements)
+    ========================================================== */
 
-  if (nouveauMontantPaye <= 0) {
-    statut = "impaye";
-  } else if (nouveauReste === 0) {
-    statut = "paye";
-  }
+    const rapport = await getPaiementById(
+      paiement.paiement_id
+    );
 
-  await updateObligationPaiement(
-    obligation.obligation_id,
-    nouveauMontantPaye,
-    nouveauReste,
-    statut
-  );
-}
+    /* ==========================================================
+       NOTIFICATION
+    ========================================================== */
+
+    await notify({
+      type: "paiement",
+      titre: "Paiement reçu",
+      message:
+        `${rapport.nom_complet} a effectué un paiement de ` +
+        `${Number(rapport.montant_verse).toLocaleString()} FC ` +
+        `(Reçu : ${rapport.numero_recu}).`,
+      reference_id: paiement.paiement_id,
+    });
 
     /* ==========================================================
        REPONSE
@@ -555,11 +569,9 @@ for (const detail of details) {
     return res.status(201).json({
       success: true,
       message: "Paiement enregistré avec succès.",
-      data: {
-        paiement,
-        details,
-      },
+      data: rapport,
     });
+
   } catch (error) {
     console.error("Erreur enregistrement du paiement :", error);
 
@@ -569,6 +581,7 @@ for (const detail of details) {
     });
   }
 };
+
 
 export const annulerPaiementController = async (req, res) => {
   try {
@@ -616,25 +629,6 @@ export const rembourserPaiementController = async (req, res) => {
    DETAILS DES PAIEMENTS
 ========================================================== */
 
-export const afficherDetailsPaiement = async (req, res) => {
-  try {
-    const { paiementId } = req.params;
-
-    const details = await getDetailsPaiement(paiementId);
-
-    res.status(200).json({
-      success: true,
-      data: details,
-    });
-  } catch (error) {
-    console.error("Erreur récupération des détails :", error);
-
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
 
 export const creerDetailPaiement = async (req, res) => {
   try {

@@ -271,7 +271,7 @@ export default function RechercheEleve() {
                 <InfoCard label="Classe" value={eleve.nom_classe} />
                 <InfoCard label="Section" value={eleve.nom_section} />
                 <InfoCard label="Option" value={eleve.nom_option || "Aucune"} />
-                <InfoCard label="Année" value={eleve.annee_scolaire} />
+                <InfoCard label="Année" value={eleve.annee_id} />
                 
                 {/* Lecture ciblée depuis l'objet finances de la recherche */}
                 <InfoCard 

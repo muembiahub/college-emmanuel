@@ -150,7 +150,7 @@ export default function Paiement() {
                 </div>
                 <div className="p-3 rounded-xl bg-white/5 border border-white/10 col-span-2 md:col-span-1">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Année scolaire</p>
-                  <p className="font-bold text-slate-200 text-xs sm:text-sm mt-1">{eleve.annee_scolaire}</p>
+                  <p className="font-bold text-slate-200 text-xs sm:text-sm mt-1">{eleve.annee_id}</p>
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
-import { HashRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { useEffect } from "react";
+import { HashRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
 import { useAuth } from "./hooks/UseAuth.jsx";
@@ -17,85 +17,85 @@ import DashboardLayout from "./components/DashboardLayout.jsx";
    Pages publiques
 =========================== */
 
-import Home from "./pages/Home.jsx";
-import Contact from "./pages/Contact.jsx";
-import Auth from "./pages/Auth.jsx";
-import NotFound from "./pages/NotFound.jsx";
+const Home = lazy(() => import("./pages/Home.jsx"));
+const Contact = lazy(() => import("./pages/Contact.jsx"));
+const Auth = lazy(() => import("./pages/Auth.jsx"));
+const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 /* ===========================
    Dashboard
 =========================== */
 
-import Dashboard from "./pages/dashboard/Dashboard.jsx";
-import Profile from "./pages/dashboard/Profile.jsx";
-import Notifications from "./pages/dashboard/Notifications.jsx";
-import Notes from "./pages/dashboard/Notes.jsx";
-import Settings from "./pages/dashboard/Settings.jsx";
+const Dashboard = lazy(() => import("./pages/dashboard/Dashboard.jsx"));
+const Profile = lazy(() => import("./pages/dashboard/Profile.jsx"));
+const Notifications = lazy(() => import("./pages/dashboard/Notifications.jsx"));
+const Notes = lazy(() => import("./pages/dashboard/Notes.jsx"));
+const Settings = lazy(() => import("./pages/dashboard/Settings.jsx"));
 
 /* ===========================
    Inscriptions
 =========================== */
 
-import Reinscription from "./pages/dashboard/inscriptions/Reinscription.jsx";
-import Nouvelle from "./pages/dashboard/inscriptions/Nouvelle.jsx";
-import Students from "./pages/dashboard/eleves/Students.jsx";
+const Reinscription = lazy(() => import("./pages/dashboard/inscriptions/Reinscription.jsx"));
+const Nouvelle = lazy(() => import("./pages/dashboard/inscriptions/Nouvelle.jsx"));
+const Students = lazy(() => import("./pages/dashboard/eleves/Students.jsx"));
 
 /* ===========================
    Classes
 =========================== */
-import ClassesOverview from "./pages/dashboard/classes/ClassesOverview.jsx";
-import Maternelle from "./pages/dashboard/classes/Maternelle.jsx";
-import Primaire from "./pages/dashboard/classes/Primaire.jsx";
-import Secondaire from "./pages/dashboard/classes/Secondaire.jsx";
+const ClassesOverview = lazy(() => import("./pages/dashboard/classes/ClassesOverview.jsx"));
+const Maternelle = lazy(() => import("./pages/dashboard/classes/Maternelle.jsx"));
+const Primaire = lazy(() => import("./pages/dashboard/classes/Primaire.jsx"));
+const Secondaire = lazy(() => import("./pages/dashboard/classes/Secondaire.jsx"));
 
 /* ===========================
    Finances
 =========================== */
 
-import RapportsFinance from "./pages/dashboard/finances/RapportsFinance.jsx";
-import Depenses from "./pages/dashboard/finances/Depenses.jsx";
-import Homepage from "./pages/dashboard/finances/FinancesHomepage.jsx";
-import PaiementsEleves from "./pages/dashboard/finances/PaiementsEleves.jsx";
-import FacturePaiement from "./pages/dashboard/finances/FacturePaiement.jsx";
-import PaiementFicheEleves from "./pages/dashboard/finances/PaiementFicheEleves.jsx";
-import ConfigurationFrais from "./pages/dashboard/finances/ConfigurationFrais.jsx"
+const RapportsFinance = lazy(() => import("./pages/dashboard/finances/RapportsFinance.jsx"));
+const Depenses = lazy(() => import("./pages/dashboard/finances/Depenses.jsx"));
+const Homepage = lazy(() => import("./pages/dashboard/finances/FinancesHomepage.jsx"));
+const PaiementsEleves = lazy(() => import("./pages/dashboard/finances/PaiementsEleves.jsx"));
+const FacturePaiement = lazy(() => import("./pages/dashboard/finances/FacturePaiement.jsx"));
+const PaiementFicheEleves = lazy(() => import("./pages/dashboard/finances/PaiementFicheEleves.jsx"));
+const ConfigurationFrais = lazy(() => import("./pages/dashboard/finances/ConfigurationFrais.jsx"));
 
 /* ===========================
    Personnel
 =========================== */
 
-import Personnel from "./pages/dashboard/Personnel.jsx";
-import Enseignants from "./pages/dashboard/personnel/Enseignants.jsx";
-import Agents from "./pages/dashboard/personnel/Agents.jsx";
-import Gardes from "./pages/dashboard/personnel/Gardes.jsx";
-import Menagers from "./pages/dashboard/personnel/Menagers.jsx";
+const Personnel = lazy(() => import("./pages/dashboard/Personnel.jsx"));
+const Enseignants = lazy(() => import("./pages/dashboard/personnel/Enseignants.jsx"));
+const Agents = lazy(() => import("./pages/dashboard/personnel/Agents.jsx"));
+const Gardes = lazy(() => import("./pages/dashboard/personnel/Gardes.jsx"));
+const Menagers = lazy(() => import("./pages/dashboard/personnel/Menagers.jsx"));
 
 /* ===========================
    Inventaire
 =========================== */
 
-import InventairePage from "./pages/dashboard/Inventaire.jsx";
-import Patrimoine from "./pages/dashboard/inventaire/Patrimoine.jsx";
-import Bureaux from "./pages/dashboard/inventaire/Bureaux.jsx";
-import SallesClasse from "./pages/dashboard/inventaire/SallesClasse.jsx";
+const InventairePage = lazy(() => import("./pages/dashboard/Inventaire.jsx"));
+const Patrimoine = lazy(() => import("./pages/dashboard/inventaire/Patrimoine.jsx"));
+const Bureaux = lazy(() => import("./pages/dashboard/inventaire/Bureaux.jsx"));
+const SallesClasse = lazy(() => import("./pages/dashboard/inventaire/SallesClasse.jsx"));
 
 /* ===========================
    Rapports
 =========================== */
 
-import Reports from "./pages/dashboard/reports/Reports.jsx";
-import ReportsAcademic from "./pages/dashboard/reports/ReportsAcademic.jsx";
-import ReportsStatistics from "./pages/dashboard/reports/ReportsStatistics.jsx";
-import ReportsAttendance from "./pages/dashboard/reports/ReportsAttendance.jsx";
+const Reports = lazy(() => import("./pages/dashboard/reports/Reports.jsx"));
+const ReportsAcademic = lazy(() => import("./pages/dashboard/reports/ReportsAcademic.jsx"));
+const ReportsStatistics = lazy(() => import("./pages/dashboard/reports/ReportsStatistics.jsx"));
+const ReportsAttendance = lazy(() => import("./pages/dashboard/reports/ReportsAttendance.jsx"));
 
 /* ===========================
    Calendrier
 =========================== */
 
-import CalendarPage from "./pages/dashboard/calendar/Calendar.jsx";
-import Events from "./pages/dashboard/calendar/Events.jsx";
-import Holidays from "./pages/dashboard/calendar/Holidays.jsx";
-import Exams from "./pages/dashboard/calendar/Exams.jsx";
+const CalendarPage = lazy(() => import("./pages/dashboard/calendar/Calendar.jsx"));
+const Events = lazy(() => import("./pages/dashboard/calendar/Events.jsx"));
+const Holidays = lazy(() => import("./pages/dashboard/calendar/Holidays.jsx"));
+const Exams = lazy(() => import("./pages/dashboard/calendar/Exams.jsx"));
 
 /* ==========================================================
    Route protégée
@@ -103,17 +103,20 @@ import Exams from "./pages/dashboard/calendar/Exams.jsx";
 
 function ProtectedRoute() {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   const devBypass =
+    import.meta.env.MODE !== "production" &&
     localStorage.getItem("DEV_SKIP_AUTH") === "1";
+  const isLoginRoute = location.pathname === "/login";
 
   useEffect(() => {
-    if (!loading && !user && !devBypass) {
+    if (!loading && !user && !devBypass && !isLoginRoute) {
       toast.error(
-        "Veuillez vous connecter pour accéder au tableau de bord."
+        "Veuillez vous connecter pour accéder à cette page."
       );
     }
-  }, [user, loading, devBypass]);
+  }, [user, loading, devBypass, isLoginRoute]);
 
   if (loading) {
     return (
@@ -121,6 +124,10 @@ function ProtectedRoute() {
         <div className="h-10 w-10 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
       </div>
     );
+  }
+
+  if (isLoginRoute) {
+    return user || devBypass ? <Navigate to="/dashboard" replace /> : <Outlet />;
   }
 
   return user || devBypass ? (
@@ -133,6 +140,14 @@ function ProtectedRoute() {
 /* ==========================================================
    Layout public
 ========================================================== */
+
+function LoadingFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="h-10 w-10 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
+    </div>
+  );
+}
 
 function PublicLayout() {
   return (
@@ -156,25 +171,25 @@ export default function App() {
   return (
     <NotificationProvider>
       <Router>
-
+        <Suspense fallback={<LoadingFallback />}>
         <Routes>
 
-          {/* =======================
-              Routes publiques
-          ======================= */}
-
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/login" element={<Auth />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-
-          {/* =======================
-              Dashboard
-          ======================= */}
-
           <Route element={<ProtectedRoute />}>
+            {/* =======================
+                Routes protégées
+            ======================= */}
+
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/login" element={<Auth />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+
+            {/* =======================
+                Dashboard
+            ======================= */}
+
             <Route path="/dashboard" element={<DashboardLayout />}>
 
               <Route index element={<Dashboard />} />
@@ -243,6 +258,7 @@ export default function App() {
           </Route>
 
         </Routes>
+        </Suspense>
 
         <Toaster
           position="top-right"

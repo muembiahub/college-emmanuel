@@ -640,7 +640,7 @@ export const updateEleve = async (id, eleveData) => {
         option_id: eleveData.option_id,
         classe_id: eleveData.classe_id,
         parallele_id: eleveData.parallele_id,
-        annee_scolaire: eleveData.annee_scolaire,
+        annee_scolaire: eleveData.annee_id,
         statut: eleveData.statut_inscription,
         montant_paye: eleveData.montant_paye,
         observations: eleveData.observations,

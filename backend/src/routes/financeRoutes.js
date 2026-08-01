@@ -1,4 +1,5 @@
 import express from "express";
+import { requireApiAuth } from "../middlewares/apiRequireAuth.js";
 
 import {
   /* ==========================================================
@@ -41,7 +42,6 @@ import {
      DETAILS DES PAIEMENTS
   ========================================================== */
   afficherElevesPaiementsParClasse,
-  afficherDetailsPaiement,
   creerDetailPaiement,
   supprimerDetailPaiement,
 
@@ -71,6 +71,8 @@ import {
 } from "../controllers/financeControllers.js";
 
 const router = express.Router();
+
+router.use(requireApiAuth);
 
 /* ==========================================================
    DASHBOARD
@@ -133,10 +135,6 @@ router.put(
 
 router.get("/classe/:classeId", afficherElevesPaiementsParClasse);
 
-router.get(
-  "/paiements/:paiementId/details",
-  afficherDetailsPaiement
-);
 
 router.post(
   "/paiements/details",

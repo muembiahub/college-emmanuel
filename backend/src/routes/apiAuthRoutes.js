@@ -18,7 +18,7 @@ router.post("/logout", logout);
 // Utilisateur connecté (protégé par middleware)
 router.get("/current-user", requireApiAuth, currentUser);
 
-router.get("/options", listerAllOptions);
+router.get("/options", requireApiAuth, listerAllOptions);
 
 
 
