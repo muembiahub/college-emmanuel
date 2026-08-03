@@ -1,40 +1,98 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Printer, Download, Share2 } from "lucide-react";
+import { ArrowLeft, Printer, Download, Share2, Loader2, AlertCircle } from "lucide-react";
 
 /**
  * Composant FacturePaiement - Format Ticket Thermique (80mm)
  * Filigrane corrigé pour l'impression.
+ * Données récupérées depuis le backend pour un reçu officiel.
  */
 export default function FacturePaiement() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const ticketRef = useRef(null);
 
+  const [paiementData, setPaiementData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const SCHOOL_LOGO =
     "https://stcxcoveiivvywefwcsi.supabase.co/storage/v1/object/sign/College-Emmanuel/logo.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8yMzYxZDVhMy02OTY3LTQ2NGQtOTM2Yy1mMTFlOGQ1NzQ4ZmQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJDb2xsZWdlLUVtbWFudWVsL2xvZ28ucG5nIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4NDU0MzM2NiwiZXhwIjoxODE2MDc5MzY2fQ.OnTEBpc3FwJgQkCZfpNXc_b6_EWtC71dYvTj73-4-Hs";
 
-  if (!state) {
-    navigate("/dashboard/finance");
-    return null;
+  useEffect(() => {
+    const paiement_id = state?.paiement_id;
+
+    if (!paiement_id) {
+      navigate("/dashboard/finances");
+      return;
+    }
+
+    const fetchPaiementData = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/finance/paiements/${paiement_id}`);
+        const data = await res.json();
+
+        if (!data.success) {
+          throw new Error(data.message || "Impossible de récupérer les données du paiement.");
+        }
+        
+        setPaiementData(data.data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPaiementData();
+  }, [state, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center font-mono text-sm text-slate-700">
+        <Loader2 className="animate-spin w-8 h-8 mb-4 text-indigo-600" />
+        <p>Chargement du reçu...</p>
+      </div>
+    );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center font-mono text-sm text-center px-4">
+        <AlertCircle className="w-10 h-10 mb-4 text-red-500" />
+        <h2 className="font-bold text-lg mb-2">Erreur de chargement</h2>
+        <p className="text-slate-600 max-w-md mb-6">{error}</p>
+        <button
+          onClick={() => navigate("/dashboard/finances")}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 text-white font-sans font-medium text-xs shadow-sm hover:bg-indigo-700 transition-colors"
+        >
+          <ArrowLeft size={16} />
+          Retour aux finances
+        </button>
+      </div>
+    );
+  }
+
+  if (!paiementData) {
+    return null; // ou un autre état d'attente/erreur
+  }
+  
   const {
-    eleve = {},
-    paiement = {},
-    montantVerse = 0,
-    monnaie = 0,
-    modePaiement = "Espèces",
-  } = state;
+    numero_recu,
+    date_paiement,
+    mode_paiement,
+    montant_verse,
+    montant_total,
+    details,
+    inscription,
+  } = paiementData;
 
-  const details = paiement.details || [];
-  const total = details.reduce(
-    (s, d) => s + Number(d.montant_paye || 0),
-    0
-  );
+  const eleve = inscription.eleve;
+  const classe = inscription.classe;
+  const annee_id = inscription.annee_id;
 
-  const numRecu =
-    paiement.paiement?.numero_recu || paiement.numero_recu || "REC-000";
+  const monnaieRendue = Number(montant_verse) - Number(montant_total);
 
   // --- IMPRESSION NATIVE AVEC CORRECTIF CSS FILIGRANE ---
   const handlePrint = () => {
@@ -100,7 +158,7 @@ export default function FacturePaiement() {
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Recu_${numRecu}</title>
+          <title>Recu_${numero_recu}</title>
           <style>
             body { font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; background: #fff; color: #000; }
             .receipt { border: 2px solid #000; padding: 12px; position: relative; }
@@ -124,7 +182,7 @@ export default function FacturePaiement() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Recu_${numRecu}_${eleve.nom || "Eleve"}.html`;
+    link.download = `Recu_${numero_recu}_${eleve.nom || "Eleve"}.html`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -138,16 +196,16 @@ export default function FacturePaiement() {
     const message = 
 `🧾 *REÇU DE PAIEMENT - COLLÈGE EMMANUEL*
 ----------------------------------
-📌 *N° Reçu :* ${numRecu}
+📌 *N° Reçu :* ${numero_recu}
 👤 *Élève :* ${nomEleve}
-🏫 *Classe :* ${eleve.nom_classe || "N/A"} (${eleve.nom_section || ""})
-📅 *Date :* ${new Date().toLocaleDateString("fr-FR")}
+🏫 *Classe :* ${classe.nom_classe || "N/A"} (${classe.section?.nom_section || ""})
+📅 *Date :* ${new Date(date_paiement).toLocaleDateString("fr-FR")}
 
 💰 *Détails du règlement :*
-- Total Payé : *${total.toLocaleString("fr-FR")} FC*
-- Mode : ${modePaiement}
-- Montant versé : ${Number(montantVerse).toLocaleString("fr-FR")} FC
-- Monnaie rendue : ${Number(monnaie).toLocaleString("fr-FR")} FC
+- Total Payé : *${Number(montant_total).toLocaleString("fr-FR")} FC*
+- Mode : ${mode_paiement}
+- Montant versé : ${Number(montant_verse).toLocaleString("fr-FR")} FC
+- Monnaie rendue : ${Number(monnaieRendue).toLocaleString("fr-FR")} FC
 
 Merci de votre confiance !`;
 
@@ -237,16 +295,16 @@ Merci de votre confiance !`;
             </div>
             <div className="flex justify-between">
               <span>N° Reçu:</span>
-              <span className="font-bold">{numRecu}</span>
+              <span className="font-bold">{numero_recu}</span>
             </div>
             <div className="flex justify-between">
               <span>Date:</span>
-              <span>{new Date().toLocaleDateString("fr-FR")}</span>
+              <span>{new Date(date_paiement).toLocaleDateString("fr-FR")}</span>
             </div>
             <div className="flex justify-between">
               <span>Heure:</span>
               <span>
-                {new Date().toLocaleTimeString("fr-FR", {
+                {new Date(date_paiement).toLocaleTimeString("fr-FR", {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
@@ -264,22 +322,26 @@ Merci de votre confiance !`;
             </div>
             <div className="flex justify-between text-[10px]">
               <span>Matricule:</span>
-              <span>{eleve.numero_inscription}</span>
+              <span>{inscription.numero_inscription}</span>
             </div>
             <div className="flex justify-between text-[10px]">
               <span>Classe:</span>
-              <span className="font-semibold">{eleve.nom_classe}</span>
+              <span className="font-semibold">{classe.nom_classe}</span>
             </div>
             <div className="flex justify-between text-[10px]">
               <span>Section:</span>
-              <span>{eleve.nom_section}</span>
+              <span>{classe.section?.nom_section}</span>
             </div>
-            {eleve.nom_option && (
+            {classe.option?.nom_option && (
               <div className="flex justify-between text-[10px]">
                 <span>Option:</span>
-                <span>{eleve.nom_option}</span>
+                <span>{classe.option.nom_option}</span>
               </div>
             )}
+             <div className="flex justify-between text-[10px]">
+              <span>Année:</span>
+              <span>{annee_id.annee_id}</span>
+            </div>
           </div>
 
           <div className="my-2 border-b border-dashed border-black"></div>
@@ -291,22 +353,22 @@ Merci de votre confiance !`;
               <span>Montant</span>
             </div>
             <div className="space-y-1.5">
-              {details.length > 0 ? (
-                details.map((o, idx) => (
+              {details?.length > 0 ? (
+                details.map((d, idx) => (
                   <div
                     key={idx}
                     className="flex justify-between items-start text-[11px]"
                   >
                     <div className="pr-2 max-w-[70%]">
                       <p className="font-semibold leading-tight">
-                        {o.types_frais?.nom || "Frais Scolaires"}
+                        {d.obligation.frais.types_frais.nom}
                       </p>
                       <p className="text-[9px] text-slate-500">
-                        {o.periode || o.mois?.nom || "Année en cours"}
+                        {d.obligation.periode}
                       </p>
                     </div>
                     <span className="font-bold whitespace-nowrap">
-                      {Number(o.montant_paye).toLocaleString("fr-FR")} FC
+                      {Number(d.montant_paye).toLocaleString("fr-FR")} FC
                     </span>
                   </div>
                 ))
@@ -324,15 +386,15 @@ Merci de votre confiance !`;
           <div className="space-y-1 text-[11px]">
             <div className="flex justify-between">
               <span>Mode de paiement:</span>
-              <span className="font-bold uppercase">{modePaiement}</span>
+              <span className="font-bold uppercase">{mode_paiement}</span>
             </div>
             <div className="flex justify-between">
               <span>Montant Versé:</span>
-              <span>{Number(montantVerse).toLocaleString("fr-FR")} FC</span>
+              <span>{Number(montant_verse).toLocaleString("fr-FR")} FC</span>
             </div>
             <div className="flex justify-between">
               <span>Monnaie rendue:</span>
-              <span>{Number(monnaie).toLocaleString("fr-FR")} FC</span>
+              <span>{monnaieRendue.toLocaleString("fr-FR")} FC</span>
             </div>
           </div>
 
@@ -341,7 +403,7 @@ Merci de votre confiance !`;
           {/* TOTAL PAYÉ */}
           <div className="flex justify-between items-center my-2 text-sm font-black">
             <span className="uppercase">TOTAL PAYÉ</span>
-            <span className="text-base">{total.toLocaleString("fr-FR")} FC</span>
+            <span className="text-base">{Number(montant_total).toLocaleString("fr-FR")} FC</span>
           </div>
 
           <div className="my-2 border-b-2 border-black"></div>

@@ -552,20 +552,7 @@ export const enregistrerPaiement = async (req, res) => {
       paiement.paiement_id
     );
 
-    /* ==========================================================
-       NOTIFICATION
-    ========================================================== */
-
-    await notify({
-      type: "paiement",
-      titre: "Paiement reçu",
-      message:
-        `${rapport.nom_complet} a effectué un paiement de ` +
-        `${Number(rapport.montant_verse).toLocaleString()} FC ` +
-        `(Reçu : ${rapport.numero_recu}).`,
-      reference_id: paiement.paiement_id,
-    });
-
+    
     /* ==========================================================
        REPONSE
     ========================================================== */

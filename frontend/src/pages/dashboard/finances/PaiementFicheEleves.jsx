@@ -85,13 +85,7 @@ export default function Paiement() {
 
       navigate("/dashboard/finances/factureseleves", {
         state: {
-          eleve,
-          obligations,
-          paiement: data.data,
-          montantVerse: Number(montantVerse),
-          devise,
-          monnaie,
-          modePaiement,
+          paiement_id: data.data.paiement_id,
         },
       });
     } catch (err) {

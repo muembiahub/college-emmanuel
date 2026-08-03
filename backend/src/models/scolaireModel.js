@@ -581,7 +581,7 @@ export const updateEleve = async (id, eleveData) => {
       numero_national: eleveData.numero_national,
       telephone: eleveData.telephone,
       email: eleveData.email,
-      eleve_adresse: eleveData.eleve_adresse,
+      adresse_eleve: eleveData.adresse_eleve,
       photo: eleveData.photo,
       statut: eleveData.statut_eleve,
       updated_at: new Date().toISOString(),
@@ -616,8 +616,8 @@ export const updateEleve = async (id, eleveData) => {
           eleveData.numero_whatsapp,
         email:
           eleveData.email_parent,
-        eleve_adresse:
-          eleveData.eleve_adresse_parent,
+        adresse_eleve:
+          eleveData.adresse_eleve_parent,
         profession:
           eleveData.profession,
 
@@ -640,7 +640,7 @@ export const updateEleve = async (id, eleveData) => {
         option_id: eleveData.option_id,
         classe_id: eleveData.classe_id,
         parallele_id: eleveData.parallele_id,
-        annee_scolaire: eleveData.annee_id,
+        annee_id: eleveData.annee_id,
         statut: eleveData.statut_inscription,
         montant_paye: eleveData.montant_paye,
         observations: eleveData.observations,

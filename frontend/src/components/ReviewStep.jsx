@@ -95,7 +95,7 @@ export default function ReviewStep({
 
         <DataItem
           label="Adresse de l'élève"
-          value={formData.eleve_adresse}
+          value={formData.adresse_eleve}
         />
       </SummarySection>
 
@@ -193,7 +193,7 @@ export default function ReviewStep({
 
         <DataItem
           label="Année scolaire"
-          value={formData.annee_scolaire}
+          value={formData.annee_id}
         />
       </SummarySection>
 

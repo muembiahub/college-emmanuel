@@ -328,7 +328,7 @@ export default function ListEleves() {
 
                                   {/* Adresse */}
                                   <p>
-                                    <span className="text-slate-500">Adresse :</span> {e.eleve_adresse || "-"}
+                                    <span className="text-slate-500">Adresse :</span> {e.adresse_eleve || "-"}
                                   </p>
                                 </div>
                               </div>
