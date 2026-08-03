@@ -20,6 +20,7 @@ import {
   createDetailPaiement,
   deleteDetailPaiement,
   getPaiements,
+  getPaiementById,
   getPaiementsByInscription,
   getMontantPaye,
 
