@@ -30,6 +30,7 @@ import {
 
   createPaiement,
 
+
   generateNumeroRecu,
   getRecettesDuJour,
   getRecettesDuMois,
@@ -53,6 +54,8 @@ import {
   updateDepense,
   
 } from "../models/financeModel.js";
+
+import { notify } from "../services/notifications.js";
 
 /* ==========================================================
    ANNEES SCOLAIRES
