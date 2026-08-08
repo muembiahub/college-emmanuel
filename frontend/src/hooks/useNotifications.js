@@ -6,7 +6,9 @@ export default function useNotifications() {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const res = await fetch("/dashboard/notifications");
+      const res = await fetch("/dashboard/notifications", {
+        credentials: "include",
+      });
 
       if (!res.ok) {
         throw new Error("Impossible de charger les notifications");

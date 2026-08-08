@@ -8,7 +8,7 @@ const API_URL = '/finance/frais';
 const callCreateFrais = async (payload) => {
   const response = await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' }, credentials: 'include',
     body: JSON.stringify(payload),
   });
   return await response.json();
@@ -17,14 +17,14 @@ const callCreateFrais = async (payload) => {
 const callUpdateFrais = async (id, payload) => {
   const response = await fetch(`${API_URL}/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' }, credentials: 'include',
     body: JSON.stringify(payload),
   });
   return await response.json();
 };
 
 const callDeleteFrais = async (id) => {
-  const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+  const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE', credentials: 'include' });
   return await response.json();
 };
 
@@ -49,10 +49,10 @@ export default function GestionFraisScolaires() {
   const chargerDonneesInitiales = async () => {
     try {
       const [resFrais, resAnnee, resSection, resType] = await Promise.all([
-        fetch(API_URL).catch(() => ({ ok: false })),
-        fetch('/finance/annees').catch(() => ({ ok: false })),
-        fetch('/dashboard/sections').catch(() => ({ ok: false })),
-        fetch('/finance/types-frais').catch(() => ({ ok: false }))
+        fetch(API_URL, { credentials: 'include' }).catch(() => ({ ok: false })),
+        fetch('/finance/annees', { credentials: 'include' }).catch(() => ({ ok: false })),
+        fetch('/dashboard/sections', { credentials: 'include' }).catch(() => ({ ok: false })),
+        fetch('/finance/types-frais', { credentials: 'include' }).catch(() => ({ ok: false }))
       ]);
 
       if (resFrais.ok) {

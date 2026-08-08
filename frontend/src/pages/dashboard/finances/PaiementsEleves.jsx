@@ -46,7 +46,7 @@ export default function RechercheEleve() {
 
       const res = await fetch(
         `/finance/rechercher?q=${encodeURIComponent(searchQuery.trim())}`,
-        { signal }
+        { signal, credentials: "include" }
       );
 
       if (!res.ok) throw new Error("Erreur réseau");
@@ -93,7 +93,8 @@ export default function RechercheEleve() {
       setChargementFrais(true);
       setError(null);
       const res = await fetch(
-        `/finance/obligations/${item.inscription_id}`
+        `/finance/obligations/${item.inscription_id}`,
+        { credentials: "include" }
       );
       const data = await res.json();
 

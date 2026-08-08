@@ -14,20 +14,11 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const token = localStorage.getItem("token");
-
-        // Si aucun jeton n'est présent, on arrête immédiatement le chargement
-        if (!token) {
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-
-        // Requête vers VOTRE serveur backend Node/Express uniquement
+        // Le cookie de session est envoyé automatiquement par le navigateur.
+        // On demande juste au backend "qui suis-je ?".
         const response = await fetch("/current-user", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          // credentials: 'include' est crucial si le frontend et le backend ne sont pas sur le même domaine en production
+          credentials: "include", 
         });
 
         const data = await response.json();
@@ -36,10 +27,7 @@ export function AuthProvider({ children }) {
           // backend retourne l'utilisateur dans la clé `user`
           setUser(data.user || data.data || null);
         } else {
-          // Si le jeton est expiré ou invalide côté Express, on nettoie le navigateur
-          if (response.status === 401) {
-            localStorage.removeItem("token");
-          }
+          // Si la session est invalide (401) ou autre erreur, on s'assure que l'utilisateur est null
           setUser(null);
         }
       } catch (error) {
@@ -54,14 +42,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   // Déclenché par le handleSubmit de votre formulaire lors d'une connexion réussie
-  const login = (token, userData) => {
-    localStorage.setItem("token", token);
+  // Le backend gère maintenant la session, le frontend a juste besoin de savoir qui est l'utilisateur.
+  const login = (userData) => {
     setUser(userData);
   };
 
   // Déconnexion complète côté client
   const logout = () => {
-    localStorage.removeItem("token");
+    // Le backend détruit la session et le cookie, on nettoie juste l'état local.
     setUser(null);
   };
 

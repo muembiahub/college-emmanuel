@@ -30,7 +30,7 @@ export default function FacturePaiement() {
     const fetchPaiementData = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/finance/paiements/${paiement_id}`);
+        const res = await fetch(`/finance/paiements/${paiement_id}`, { credentials: "include" });
         const data = await res.json();
 
         if (!data.success) {

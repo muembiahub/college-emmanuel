@@ -84,7 +84,7 @@ export default function Nouvelle() {
 
   async function loadSections() {
     try {
-      const res = await fetch("/dashboard/sections");
+      const res = await fetch("/dashboard/sections", { credentials: "include" });
 
       if (!res.ok) {
         throw new Error("Impossible de charger les sections.");
@@ -110,7 +110,8 @@ async function loadOptions(sectionId) {
 
   try {
     const res = await fetch(
-      `/dashboard/options?section_id=${sectionId}`
+      `/dashboard/options?section_id=${sectionId}`,
+      { credentials: "include" }
     );
 
     if (!res.ok) {
@@ -140,7 +141,8 @@ async function loadClasses(optionId) {
 
   try {
     const res = await fetch(
-      `/dashboard/classes?option_id=${optionId}`
+      `/dashboard/classes?option_id=${optionId}`,
+      { credentials: "include" }
     );
 
     if (!res.ok) {
@@ -168,7 +170,8 @@ async function loadParalleles(classeId) {
 
   try {
     const res = await fetch(
-      `/dashboard/paralleles?classe_id=${classeId}`
+      `/dashboard/paralleles?classe_id=${classeId}`,
+      { credentials: "include" }
     );
 
     if (!res.ok) {
@@ -194,7 +197,7 @@ async function loadAnnees() {
   try {
     setError(null);
 
-    const res = await fetch("/finance/annees");
+    const res = await fetch("/finance/annees", { credentials: "include" });
 
     const result = await res.json();
     if (!res.ok) {
@@ -385,7 +388,8 @@ async function handleSubmit(e) {
     console.log(formData);
     const response = await fetch("/dashboard/inscription", {
       method: "POST",
-      headers: { 
+      credentials: "include",
+      headers: {
         "Content-Type": "application/json" 
       },
       body: JSON.stringify(payloadComplet)

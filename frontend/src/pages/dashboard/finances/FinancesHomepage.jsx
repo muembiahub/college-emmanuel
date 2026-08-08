@@ -31,7 +31,7 @@ export default function FinancesHomepage() {
   async function chargerDashboard() {
     try {
       setLoading(true);
-      const res = await fetch("/finance/homepage");
+      const res = await fetch("/finance/homepage", { credentials: "include" });
       const json = await res.json();
       if (json.success) {
         setFinance(json.data);

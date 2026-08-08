@@ -48,7 +48,7 @@ export default function EditStudentModal({ open, student, onClose, onSave }) {
     setLoadingStates(prev => ({ ...prev, [key]: true }));
     setErrorStates(prev => ({ ...prev, [key]: null }));
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) throw new Error("Réponse du réseau incorrecte.");
       const result = await response.json();
 

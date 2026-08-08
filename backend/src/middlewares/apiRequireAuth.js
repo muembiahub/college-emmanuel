@@ -1,113 +1,121 @@
+
 import { supabase } from "../config/database.js";
 
-/* =====================================================
-   AUTH MIDDLEWARE (USER AUTH)
-===================================================== */
+/* =========================================================
+   AUTH MIDDLEWARE
+   Authentification via express-session + Supabase
+========================================================= */
+
 export const requireApiAuth = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    /* =====================================================
+       1. Récupérer le token depuis la session
+    ===================================================== */
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const token = req.session?.supabaseAccessToken;
+
+    console.log("🔐 Vérification authentification...");
+    console.log("🆔 Session ID:", req.sessionID);
+    console.log("🔑 Token présent:", !!token);
+
+    if (!token) {
+      console.log("❌ Aucun token dans la session");
+
       return res.status(401).json({
         success: false,
         message: "Authentification requise",
       });
     }
 
-    const token = authHeader.split(" ")[1];
+    /* =====================================================
+       2. Vérifier le token auprès de Supabase
+    ===================================================== */
 
-    // Vérification sécurisée du token JWT natif directement auprès de Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    console.log("🔎 Vérification du token auprès de Supabase...");
 
-    if (error || !user) {
-      return res.status(401).json({
-        success: false,
-        message: "Token invalide ou expiré",
-      });
-    }
-
-    // On attache l'utilisateur à la requête (compatible avec req.user.uid ou req.user.id)
-    req.user = {
-      id: user.id,
-      uid: user.id,
-      email: user.email,
-    };
-
-    next();
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: "Erreur interne lors de la vérification de l'authentification",
-    });
-  }
-};
-
-/* =====================================================
-   ADMIN MIDDLEWARE
-===================================================== */
-export const requireApiAdmin = async (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentification requise",
-      });
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    // 1. Validation du token par Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
+      console.error(
+        "❌ Token Supabase invalide:",
+        authError?.message
+      );
+
       return res.status(401).json({
         success: false,
         message: "Token invalide ou expiré",
       });
     }
 
-    req.user = {
-      id: user.id,
-      uid: user.id,
-      email: user.email,
-    };
+    console.log("✅ Utilisateur Supabase:", user.id);
+    console.log("📧 Email:", user.email);
 
-    // 2. Récupération du profil ET du rôle associé en UNE seule requête imbriquée (Jointure)
-    const { data: profile, error: profileError } = await supabase
+    /* =====================================================
+       3. Récupérer le profil et le rôle
+    ===================================================== */
+
+    const {
+      data: profile,
+      error: profileError,
+    } = await supabase
       .from("user_profiles")
       .select(`
-        uid,
-        roles!user_profiles_role_id_fkey (
+        *,
+        roles (
           name
         )
       `)
-      .eq("uid", user.id)
-      .maybeSingle();
+      .eq("user_id", user.id)
+      .single();
 
-    if (profileError || !profile) {
+    console.log("👤 Profil trouvé:", !!profile);
+
+    if (profileError) {
+      console.error(
+        "❌ Erreur profil:",
+        profileError.message
+      );
+
       return res.status(404).json({
         success: false,
-        message: "Profil ou privilèges utilisateur introuvables",
+        message: "Profil utilisateur introuvable.",
       });
     }
 
-    // 3. Vérification stricte du rôle Administrateur
-    const roleName = profile.roles?.name?.toLowerCase();
+    /* =====================================================
+       4. Ajouter l'utilisateur à la requête
+    ===================================================== */
 
-    if (roleName !== "admin" && roleName !== "superadmin") {
-      return res.status(403).json({
-        success: false,
-        message: "Accès refusé. Droits d'administration requis.",
-      });
-    }
+    req.user = {
+      ...profile,
+
+      // Informations Supabase utiles
+      id: user.id,
+      email: user.email,
+    };
+
+    console.log("✅ Authentification réussie");
+    console.log("👤 Utilisateur:", req.user.email);
+
+    /* =====================================================
+       5. Continuer vers le contrôleur
+    ===================================================== */
 
     next();
-  } catch (err) {
+
+  } catch (error) {
+    console.error(
+      "❌ Erreur middleware authentification:",
+      error
+    );
+
     return res.status(500).json({
       success: false,
-      message: "Erreur interne lors de la vérification des droits admin",
+      message:
+        "Erreur interne lors de la vérification de l'authentification",
     });
   }
 };

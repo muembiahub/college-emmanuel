@@ -67,6 +67,7 @@ export default function Paiement() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           inscription_id: eleve.inscription_id,
           mode_paiement: modePaiement,
