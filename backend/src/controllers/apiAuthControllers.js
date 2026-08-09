@@ -316,6 +316,8 @@ export const completeInvitation = async (req, res) => {
 
     // Connexion automatique
     const loginResult = await signInWithProfile(updatedUser.email, password);
+    console.log("🔐 Résultat login:", loginResult);
+
     if (!loginResult.success || !loginResult.session?.access_token) {
       console.error("❌ Connexion automatique impossible:", loginResult.message);
       return res.status(500).json({
