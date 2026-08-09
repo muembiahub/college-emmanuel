@@ -62,23 +62,22 @@ export const completeInvitationSetup = async (
   profileData = {}
 ) => {
   try {
-    // Vérifier token
+    // Vérifier le token et récupérer l'utilisateur
     const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
     if (userError || !userData?.user) {
       return { success: false, message: "Lien invalide ou expiré." };
     }
     const user = userData.user;
 
-    // Définir mot de passe
-    const { error: updateError } = await supabase.auth.updateUser(
-      { password },
-      { jwt: accessToken }
-    );
+    // Définir le mot de passe via API Admin (service_role)
+    const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
+      password,
+    });
     if (updateError) {
       return { success: false, message: updateError.message };
     }
 
-    // Créer profil via RPC
+    // Créer le profil via RPC
     const { data: profile, error: rpcError } = await supabase.rpc("finalize_invitation", {
       uid: user.id,
       firstname: profileData.firstname,
