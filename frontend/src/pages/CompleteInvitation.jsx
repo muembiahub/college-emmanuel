@@ -1,10 +1,7 @@
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 export default function CompleteInvitationPage() {
-  const [searchParams] = useSearchParams();
-  const accessToken = searchParams.get("access_token");
-
+  const [accessToken, setAccessToken] = useState(null);
   const [form, setForm] = useState({
     firstname: "",
     lastname: "",
@@ -12,10 +9,23 @@ export default function CompleteInvitationPage() {
     password: "",
   });
 
+  // Récupérer le token depuis le hash (#access_token=...)
+  useEffect(() => {
+    const hash = window.location.hash; // ex: "#access_token=eyJhbGciOi..."
+    const params = new URLSearchParams(hash.replace("#", ""));
+    const token = params.get("access_token");
+    setAccessToken(token);
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await fetch("/api/complete-invitation", {
+    if (!accessToken) {
+      alert("Token d'invitation manquant !");
+      return;
+    }
+
+    const res = await fetch("/complete-invitation", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -35,32 +45,44 @@ export default function CompleteInvitationPage() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="text"
-        placeholder="Prénom"
-        value={form.firstname}
-        onChange={(e) => setForm({ ...form, firstname: e.target.value })}
-      />
-      <input
-        type="text"
-        placeholder="Nom"
-        value={form.lastname}
-        onChange={(e) => setForm({ ...form, lastname: e.target.value })}
-      />
-      <input
-        type="text"
-        placeholder="Téléphone"
-        value={form.phone}
-        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-      />
-      <input
-        type="password"
-        placeholder="Mot de passe"
-        value={form.password}
-        onChange={(e) => setForm({ ...form, password: e.target.value })}
-      />
-      <button type="submit">Finaliser l'invitation</button>
-    </form>
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
+      <h2 className="text-xl font-bold mb-4">Finaliser votre invitation</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="text"
+          placeholder="Prénom"
+          value={form.firstname}
+          onChange={(e) => setForm({ ...form, firstname: e.target.value })}
+          className="w-full border p-2 rounded"
+        />
+        <input
+          type="text"
+          placeholder="Nom"
+          value={form.lastname}
+          onChange={(e) => setForm({ ...form, lastname: e.target.value })}
+          className="w-full border p-2 rounded"
+        />
+        <input
+          type="text"
+          placeholder="Téléphone"
+          value={form.phone}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          className="w-full border p-2 rounded"
+        />
+        <input
+          type="password"
+          placeholder="Mot de passe"
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          className="w-full border p-2 rounded"
+        />
+        <button
+          type="submit"
+          className="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700"
+        >
+          Finaliser l'invitation
+        </button>
+      </form>
+    </div>
   );
 }
