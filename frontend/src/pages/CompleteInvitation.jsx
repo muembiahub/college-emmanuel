@@ -9,24 +9,16 @@ export default function CompleteInvitationPage() {
     password: "",
   });
 
+  // Récupérer le token depuis le hash (#access_token=...)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const token = params.get("access_token");
+    setAccessToken(token);
+  }, []);
 
-useEffect(() => {
-  let hash = window.location.hash;
-
-  // Supprimer la partie route "#/complete/invitation"
-  if (hash.startsWith("#/complete/invitation")) {
-    hash = hash.replace("#/complete/invitation", "");
-  }
-
-  // Supprimer le premier "#"
-  hash = hash.replace(/^#/, "");
-
-  const params = new URLSearchParams(hash);
-  const token = params.get("access_token");
-  setAccessToken(token);
-}, []);
-
-
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,7 +36,7 @@ useEffect(() => {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(form),
-        credentials: "include",
+        credentials: "include", // indispensable pour envoyer le cookie
       });
 
       const data = await res.json();
@@ -70,30 +62,34 @@ useEffect(() => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
+            name="firstname"
             placeholder="Prénom"
             value={form.firstname}
-            onChange={(e) => setForm({ ...form, firstname: e.target.value })}
+            onChange={handleChange}
             className="w-full border p-2 rounded"
           />
           <input
             type="text"
+            name="lastname"
             placeholder="Nom"
             value={form.lastname}
-            onChange={(e) => setForm({ ...form, lastname: e.target.value })}
+            onChange={handleChange}
             className="w-full border p-2 rounded"
           />
           <input
             type="text"
+            name="phone"
             placeholder="Téléphone"
             value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            onChange={handleChange}
             className="w-full border p-2 rounded"
           />
           <input
             type="password"
+            name="password"
             placeholder="Mot de passe"
             value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            onChange={handleChange}
             className="w-full border p-2 rounded"
           />
           <button
