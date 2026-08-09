@@ -36,7 +36,7 @@ export default function CompleteInvitationPage() {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(form),
-        credentials: "include", // indispensable pour envoyer le cookie
+        credentials: "include", // indispensable pour envoyer le cookie de session
       });
 
       const data = await res.json();
