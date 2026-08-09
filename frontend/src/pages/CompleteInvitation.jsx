@@ -10,85 +10,100 @@ export default function CompleteInvitationPage() {
   });
 
   // Récupérer le token depuis le hash (#access_token=...)
- useEffect(() => {
-  const hash = window.location.hash; 
-  // Exemple: "#/complete/invitation#access_token=eyJhbGciOi..."
-  
-  // On enlève la partie route
-  const cleanHash = hash.replace("#/complete/invitation", "").replace("#", "");
-  const params = new URLSearchParams(cleanHash);
-  const token = params.get("access_token");
-  
-  setAccessToken(token);
-}, []);
+  useEffect(() => {
+    const hash = window.location.hash;
+    // Exemple: "#access_token=eyJhbGciOi..." ou "#/complete/invitation#access_token=..."
+    let cleanHash = hash;
 
+    // Supprimer la route si présente
+    if (cleanHash.includes("/complete/invitation")) {
+      cleanHash = cleanHash.replace("#/complete/invitation", "");
+    }
+
+    // Supprimer le premier "#"
+    cleanHash = cleanHash.replace(/^#/, "");
+
+    const params = new URLSearchParams(cleanHash);
+    const token = params.get("access_token");
+    setAccessToken(token);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!accessToken) {
-      alert("Token d'invitation manquant !");
+      alert("Token d'invitation manquant ou invalide !");
       return;
     }
 
-    const res = await fetch("/complete-invitation", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(form),
-      credentials: "include",
-    });
+    try {
+      const res = await fetch("/complete-invitation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(form),
+        credentials: "include",
+      });
 
-    const data = await res.json();
-    if (data.success) {
-      alert("Invitation finalisée !");
-      window.location.href = "/dashboard";
-    } else {
-      alert("Erreur: " + data.message);
+      const data = await res.json();
+      if (data.success) {
+        alert("Invitation finalisée !");
+        window.location.href = "/dashboard";
+      } else {
+        alert("Erreur: " + data.message);
+      }
+    } catch (err) {
+      alert("Erreur réseau: " + err.message);
     }
   };
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
       <h2 className="text-xl font-bold mb-4">Finaliser votre invitation</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          placeholder="Prénom"
-          value={form.firstname}
-          onChange={(e) => setForm({ ...form, firstname: e.target.value })}
-          className="w-full border p-2 rounded"
-        />
-        <input
-          type="text"
-          placeholder="Nom"
-          value={form.lastname}
-          onChange={(e) => setForm({ ...form, lastname: e.target.value })}
-          className="w-full border p-2 rounded"
-        />
-        <input
-          type="text"
-          placeholder="Téléphone"
-          value={form.phone}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          className="w-full border p-2 rounded"
-        />
-        <input
-          type="password"
-          placeholder="Mot de passe"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          className="w-full border p-2 rounded"
-        />
-        <button
-          type="submit"
-          className="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700"
-        >
-          Finaliser l'invitation
-        </button>
-      </form>
+      {!accessToken ? (
+        <p className="text-red-600">
+          ⚠️ Lien invalide ou expiré. Veuillez demander une nouvelle invitation.
+        </p>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            placeholder="Prénom"
+            value={form.firstname}
+            onChange={(e) => setForm({ ...form, firstname: e.target.value })}
+            className="w-full border p-2 rounded"
+          />
+          <input
+            type="text"
+            placeholder="Nom"
+            value={form.lastname}
+            onChange={(e) => setForm({ ...form, lastname: e.target.value })}
+            className="w-full border p-2 rounded"
+          />
+          <input
+            type="text"
+            placeholder="Téléphone"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            className="w-full border p-2 rounded"
+          />
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            className="w-full border p-2 rounded"
+          />
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700"
+          >
+            Finaliser l'invitation
+          </button>
+        </form>
+      )}
     </div>
   );
 }
