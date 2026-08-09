@@ -9,12 +9,7 @@ export default function CompleteInvitationPage() {
     password: "",
   });
 
-  // Récupérer le token depuis le hash (#access_token=...)
- useEffect(() => {
-  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-  const token = params.get("access_token");
-  setAccessToken(token);
-}, []);
+
 
 
   const handleSubmit = async (e) => {
