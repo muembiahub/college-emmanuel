@@ -273,7 +273,6 @@ export const completeInvitation = async (req, res) => {
     console.log("=================================");
     console.log("📨 FINALISATION INVITATION");
 
-    // Données envoyées par le frontend
     const { password, firstname, lastname, phone } = req.body;
 
     // Récupération du token d'invitation
@@ -283,80 +282,49 @@ export const completeInvitation = async (req, res) => {
       : null;
 
     if (!accessToken) {
-      return res.status(401).json({
-        success: false,
-        message: "Jeton d'invitation manquant.",
-      });
+      return res.status(401).json({ success: false, message: "Jeton d'invitation manquant." });
     }
 
-    // Vérification mot de passe
     if (!password || password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: "Le mot de passe doit contenir au moins 6 caractères.",
-      });
+      return res.status(400).json({ success: false, message: "Le mot de passe doit contenir au moins 6 caractères." });
     }
 
-    // Vérification infos personnelles
     if (!firstname || !lastname) {
-      return res.status(400).json({
-        success: false,
-        message: "Le prénom et le nom sont obligatoires.",
-      });
+      return res.status(400).json({ success: false, message: "Le prénom et le nom sont obligatoires." });
     }
 
     // Finaliser l'invitation via le service
-    const result = await completeInvitationSetup(accessToken, password, {
-      firstname,
-      lastname,
-      phone,
-    });
+    const result = await completeInvitationSetup(accessToken, password, { firstname, lastname, phone });
 
     if (!result.success) {
       console.error("❌ Erreur invitation:", result.message);
 
       if (result.message.toLowerCase().includes("expir")) {
-        return res.status(400).json({
-          success: false,
-          message: "Le lien d'invitation est invalide ou expiré.",
-        });
+        return res.status(400).json({ success: false, message: "Le lien d'invitation est invalide ou expiré." });
       }
-
       if (result.message.toLowerCase().includes("déjà")) {
-        return res.status(409).json({
-          success: false,
-          message: "Ce compte a déjà été configuré.",
-        });
+        return res.status(409).json({ success: false, message: "Ce compte a déjà été configuré." });
       }
 
-      return res.status(400).json({
-        success: false,
-        message: result.message,
-      });
+      return res.status(400).json({ success: false, message: result.message });
     }
 
     const updatedUser = result.user;
     if (!updatedUser?.email) {
-      return res.status(500).json({
-        success: false,
-        message: "Impossible de récupérer l'utilisateur après la finalisation.",
-      });
+      return res.status(500).json({ success: false, message: "Impossible de récupérer l'utilisateur après la finalisation." });
     }
 
     // Connexion automatique
     const loginResult = await signInWithProfile(updatedUser.email, password);
-
     if (!loginResult.success || !loginResult.session?.access_token) {
       console.error("❌ Connexion automatique impossible:", loginResult.message);
-
       return res.status(500).json({
         success: false,
-        message:
-          "Compte créé, mais la connexion automatique a échoué. Veuillez vous connecter manuellement.",
+        message: "Compte créé, mais la connexion automatique a échoué. Veuillez vous connecter manuellement.",
       });
     }
 
-    // Stocker le token dans express-session
+    // Stocker le token et infos utilisateur dans la session
     req.session.supabaseAccessToken = loginResult.session.access_token;
     req.session.user = {
       id: updatedUser.id,
@@ -366,38 +334,25 @@ export const completeInvitation = async (req, res) => {
       phone,
     };
 
-    // Sauvegarder la session avant réponse
-    req.session.save((err) => {
-      if (err) {
-        console.error("❌ Erreur sauvegarde session invitation:", err);
+    // Sauvegarde asynchrone
+    await req.session.save();
 
-        return res.status(500).json({
-          success: false,
-          message: "Compte créé, mais impossible de créer la session.",
-        });
-      }
+    console.log("✅ Session créée après invitation");
+    console.log("🆔 Session:", req.sessionID);
+    console.log("🔐 Token présent:", !!req.session.supabaseAccessToken);
+    console.log("👤 Profil:", result.profile?.id);
+    console.log("🔐 Rôle:", result.profile?.roles?.name);
+    console.log("=================================");
 
-      console.log("✅ Session créée après invitation");
-      console.log("🆔 Session:", req.sessionID);
-      console.log("🔐 Token présent:", !!req.session.supabaseAccessToken);
-      console.log("👤 Profil:", result.profile?.id);
-      console.log("🔐 Rôle:", result.profile?.roles?.name);
-      console.log("=================================");
-
-      return res.status(200).json({
-        success: true,
-        message: "Compte créé et connecté avec succès.",
-        user: result.user,
-        profile: result.profile,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Compte créé et connecté avec succès.",
+      user: result.user,
+      profile: result.profile,
     });
   } catch (error) {
     console.error("❌ Erreur completeInvitation:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Erreur interne du serveur.",
-    });
+    return res.status(500).json({ success: false, message: error.message || "Erreur interne du serveur." });
   }
 };
 

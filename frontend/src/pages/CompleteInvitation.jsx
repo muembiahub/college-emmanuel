@@ -10,23 +10,12 @@ export default function CompleteInvitationPage() {
   });
 
   // Récupérer le token depuis le hash (#access_token=...)
-  useEffect(() => {
-    const hash = window.location.hash;
-    // Exemple: "#access_token=eyJhbGciOi..." ou "#/complete/invitation#access_token=..."
-    let cleanHash = hash;
+ useEffect(() => {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const token = params.get("access_token");
+  setAccessToken(token);
+}, []);
 
-    // Supprimer la route si présente
-    if (cleanHash.includes("/complete/invitation")) {
-      cleanHash = cleanHash.replace("#/complete/invitation", "");
-    }
-
-    // Supprimer le premier "#"
-    cleanHash = cleanHash.replace(/^#/, "");
-
-    const params = new URLSearchParams(cleanHash);
-    const token = params.get("access_token");
-    setAccessToken(token);
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
