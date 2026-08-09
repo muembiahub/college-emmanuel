@@ -170,10 +170,11 @@ function RoleRoute({ allowedRoles }) {
 
 
       toast.error(
-        `Accès refusé : votre rôle "${roleName}" ne permet pas d'accéder à cette section.`,
+        `Accès refusé : votre rôle "${roleName}" ne permet pas d'accéder à cette section.
+        Si vous pensez que c'est une erreur, veuillez contacter la Direction.`,
         {
           id: "access-denied",
-          duration: 5000,
+          duration: 10000,
         }
       );
     }
