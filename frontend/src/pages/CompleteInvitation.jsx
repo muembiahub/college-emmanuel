@@ -10,7 +10,7 @@ export default function CompleteInvitationPage() {
   });
 
 
- useEffect(() => {
+useEffect(() => {
   let hash = window.location.hash;
 
   // Supprimer la partie route "#/complete/invitation"
@@ -25,6 +25,7 @@ export default function CompleteInvitationPage() {
   const token = params.get("access_token");
   setAccessToken(token);
 }, []);
+
 
 
   const handleSubmit = async (e) => {

@@ -1,6 +1,6 @@
-import { HashRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 
 import { useAuth } from "./hooks/UseAuth.jsx";
 import { NotificationProvider } from "./context/NotificationContext.jsx";
@@ -81,11 +81,6 @@ function PublicLayout() {
    APP
 ========================================================== */
 export default function App() {
-  // ⚠️ Redirection immédiate AVANT Router
-  if (window.location.hash.startsWith("#access_token")) {
-    window.location.replace(`/#/complete/invitation${window.location.hash}`);
-  }
-
   return (
     <NotificationProvider>
       <Router>
