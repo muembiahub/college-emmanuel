@@ -10,6 +10,9 @@ const router = express.Router();
    AUTH ROUTES
 ===================================================== */
 
+// Finalisation invitation
+router.post("/complete-invitation", completeInvitation);
+
 // Connexion
 router.post("/login", login);
 
@@ -18,9 +21,6 @@ router.post("/logout", logout);
 
 // Utilisateur connecté (protégé par middleware)
 router.get("/current-user", requireApiAuth, currentUser);
-
-// Finalisation du compte après invitation
-router.post("/account/create", completeInvitation);
 
 // Route pour les rapports financiers paginés
 router.get("/finance/rapports", requireApiAuth, getRapportsPagine);

@@ -12,6 +12,7 @@ import { NotificationProvider } from "./context/NotificationContext.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import DashboardLayout from "./components/DashboardLayout.jsx";
+import CompleteInvitationPage from "./pages/CompleteInvitation.jsx";
 
 /* ===========================
    Pages publiques
@@ -20,7 +21,7 @@ import DashboardLayout from "./components/DashboardLayout.jsx";
 const Home = lazy(() => import("./pages/Home.jsx"));
 const Contact = lazy(() => import("./pages/Contact.jsx"));
 const Auth = lazy(() => import("./pages/Auth.jsx"));
-const Callback = lazy(() => import("./pages/AuthCallback.jsx"));
+const CompleteInvitation = lazy(() => import("./pages/CompleteInvitation.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 /* ===========================
@@ -183,7 +184,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Auth />} />
-            <Route path="/callback" element={<Callback />} />
+            <Route path="/complete/invitation" element={<CompleteInvitation />} />
             <Route path="*" element={<NotFound />} />
           </Route>
 

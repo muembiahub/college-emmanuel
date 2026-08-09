@@ -12,6 +12,7 @@ import authRouter from "./src/routes/apiAuthRoutes.js";
 import dashboardRouter from "./src/routes/scolaireRoutes.js";
 import financeRoutes from "./src/routes/financeRoutes.js";
 
+
 /* =========================================================
    CONFIGURATION
 ========================================================= */
