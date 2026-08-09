@@ -10,6 +10,21 @@ export default function CompleteInvitationPage() {
   });
 
 
+ useEffect(() => {
+  let hash = window.location.hash;
+
+  // Supprimer la partie route "#/complete/invitation"
+  if (hash.startsWith("#/complete/invitation")) {
+    hash = hash.replace("#/complete/invitation", "");
+  }
+
+  // Supprimer le premier "#"
+  hash = hash.replace(/^#/, "");
+
+  const params = new URLSearchParams(hash);
+  const token = params.get("access_token");
+  setAccessToken(token);
+}, []);
 
 
   const handleSubmit = async (e) => {
