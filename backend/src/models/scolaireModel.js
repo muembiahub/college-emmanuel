@@ -12,6 +12,7 @@ export const getDashboardStats = async () => {
     sections,
     options,
     statistiquesClasses,
+    statistiquesPersonnels,
   ] = await Promise.all([
 
     // Nombre d'élèves inscrits
@@ -54,6 +55,14 @@ export const getDashboardStats = async () => {
       .order("nom_option")
       .order("nom_classe")
       .order("nom_parallele"),
+    // Statistiques par personnel
+    supabase
+    .from("personnel")
+    .select("*",{
+      count: "exact",
+      head: true,
+    }),
+
   ]);
 
   if (inscriptions.error) throw inscriptions.error;
@@ -67,6 +76,7 @@ export const getDashboardStats = async () => {
     classesCount: classes.count ?? 0,
     sectionsCount: sections.count ?? 0,
     optionsCount: options.count ?? 0,
+    personnelCount: statistiquesPersonnels.count ?? 0,
 
     studentsByClass: statistiquesClasses.data ?? [],
   };

@@ -146,7 +146,7 @@ export default function Dashboard() {
     },
     {
       title: "Personnels",
-      value: dashboardData?.stats?.teachersCount ?? 0,
+      value: dashboardData?.stats?.personnelCount ?? 0,
       icon: GraduationCap,
       colorClass: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
       linkTo: "/dashboard/personnel"
