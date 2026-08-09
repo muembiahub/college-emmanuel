@@ -8,6 +8,9 @@ export default function CompleteInvitationPage() {
     phone: "",
     password: "",
   });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Récupérer le token depuis le hash (#access_token=...)
   useEffect(() => {
@@ -17,16 +20,20 @@ export default function CompleteInvitationPage() {
   }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
 
     if (!accessToken) {
-      alert("Token d'invitation manquant ou invalide !");
+      setErrorMessage("Token d'invitation manquant ou invalide.");
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const res = await fetch("/complete-invitation", {
@@ -36,67 +43,112 @@ export default function CompleteInvitationPage() {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(form),
-        credentials: "include", // indispensable pour envoyer le cookie de session
+        credentials: "include",
       });
 
       const data = await res.json();
-      if (data.success) {
-        alert("Invitation finalisée !");
+
+      if (res.ok && data.success) {
         window.location.href = "/dashboard";
       } else {
-        alert("Erreur: " + data.message);
+        setErrorMessage(data.message || "Une erreur est survenue lors de la finalisation.");
       }
     } catch (err) {
-      alert("Erreur réseau: " + err.message);
+      setErrorMessage("Erreur réseau : Veuillez vérifier votre connexion.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
-      <h2 className="text-xl font-bold mb-4">Finaliser votre invitation</h2>
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+        Finaliser votre invitation
+      </h2>
+
+      {errorMessage && (
+        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded">
+          {errorMessage}
+        </div>
+      )}
+
       {!accessToken ? (
-        <p className="text-red-600">
+        <div className="p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-md text-center">
           ⚠️ Lien invalide ou expiré. Veuillez demander une nouvelle invitation.
-        </p>
+        </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            name="firstname"
-            placeholder="Prénom"
-            value={form.firstname}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-          <input
-            type="text"
-            name="lastname"
-            placeholder="Nom"
-            value={form.lastname}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-          <input
-            type="text"
-            name="phone"
-            placeholder="Téléphone"
-            value={form.phone}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Mot de passe"
-            value={form.password}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
+          <div>
+            <label htmlFor="firstname" className="block text-sm font-medium text-gray-700 mb-1">
+              Prénom
+            </label>
+            <input
+              id="firstname"
+              type="text"
+              name="firstname"
+              required
+              placeholder="Ex: Jean"
+              value={form.firstname}
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-2.5 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="lastname" className="block text-sm font-medium text-gray-700 mb-1">
+              Nom
+            </label>
+            <input
+              id="lastname"
+              type="text"
+              name="lastname"
+              required
+              placeholder="Ex: Dupont"
+              value={form.lastname}
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-2.5 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+              Téléphone
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              name="phone"
+              required
+              placeholder="Ex: 0612345678"
+              value={form.phone}
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-2.5 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Mot de passe
+            </label>
+            <input
+              id="password"
+              type="password"
+              name="password"
+              required
+              minLength={8}
+              placeholder="••••••••"
+              value={form.password}
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-2.5 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700"
+            disabled={isSubmitting}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-medium p-2.5 rounded-md transition-colors duration-200"
           >
-            Finaliser l'invitation
+            {isSubmitting ? "Validation en cours..." : "Finaliser l'invitation"}
           </button>
         </form>
       )}
