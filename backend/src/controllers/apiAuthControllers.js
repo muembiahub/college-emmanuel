@@ -315,7 +315,6 @@ export const completeInvitation = async (req, res) => {
     if (!result.success) {
       console.error("❌ Erreur invitation:", result.message);
 
-      // Messages spécifiques
       if (result.message.toLowerCase().includes("expir")) {
         return res.status(400).json({
           success: false,
@@ -359,6 +358,13 @@ export const completeInvitation = async (req, res) => {
 
     // Stocker le token dans express-session
     req.session.supabaseAccessToken = loginResult.session.access_token;
+    req.session.user = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      firstname,
+      lastname,
+      phone,
+    };
 
     // Sauvegarder la session avant réponse
     req.session.save((err) => {
@@ -394,4 +400,5 @@ export const completeInvitation = async (req, res) => {
     });
   }
 };
+
 
