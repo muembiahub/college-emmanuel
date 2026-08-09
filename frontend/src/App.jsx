@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 
 import { useAuth } from "./hooks/UseAuth.jsx";
@@ -34,29 +34,28 @@ function ProtectedRoute() {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  const devBypass =
-    import.meta.env.MODE !== "production" &&
-    localStorage.getItem("DEV_SKIP_AUTH") === "1";
-  const isLoginRoute = location.pathname === "/login";
-
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="h-10 w-10 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
-      </div>
-    );
+    return <LoadingFallback />;
   }
 
-  if (isLoginRoute) {
-    return user || devBypass ? <Navigate to="/dashboard" replace /> : <Outlet />;
-  }
-
-  return user || devBypass ? <Outlet /> : <Navigate to="/login" replace />;
+  return user ? <Outlet /> : <Navigate to="/login" replace state={{ from: location }} />;
 }
 
 /* ==========================================================
-   Layout public
+   Layout public + redirection auto
 ========================================================== */
+function RootRedirect() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (window.location.hash.includes("access_token")) {
+      navigate("/complete/invitation" + window.location.hash, { replace: true });
+    }
+  }, [navigate]);
+
+  return null;
+}
+
 function LoadingFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -69,6 +68,7 @@ function PublicLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Navbar />
+      <RootRedirect /> {/* intercepteur pour invitation */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
         <Outlet />
       </main>
@@ -110,15 +110,9 @@ export default function App() {
 
         <Toaster
           position="top-right"
-          reverseOrder={false}
-          gutter={10}
           toastOptions={{
             duration: 4000,
-            style: {
-              borderRadius: "12px",
-              background: "#1e293b",
-              color: "#fff",
-            },
+            style: { borderRadius: "12px", background: "#1e293b", color: "#fff" },
             success: { duration: 3500 },
             error: { duration: 5000 },
           }}
