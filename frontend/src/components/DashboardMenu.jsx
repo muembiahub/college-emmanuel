@@ -200,7 +200,7 @@ export default function DashboardMenu({
 
     {
       name: "Notifications",
-      path: "/dashboard/notifications",
+      path: "/notifications",
       icon: BellDot,
 
       visible:

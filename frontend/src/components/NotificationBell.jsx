@@ -88,12 +88,12 @@ export default function NotificationBell() {
 
     setOpen(false);
 
-    navigate("/dashboard/notifications");
+    navigate("/notifications");
   }
 
   function openNotificationsPage() {
     setOpen(false);
-    navigate("/dashboard/notifications");
+    navigate("/notifications");
   }
 
   return (
