@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useContext,
@@ -11,6 +12,12 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  /*
+   * ==========================================================
+   * CHARGEMENT DE L'UTILISATEUR
+   * ==========================================================
+   */
+
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -22,15 +29,27 @@ export function AuthProvider({ children }) {
         const data = await response.json();
 
         if (response.ok && data.success) {
-          // Le backend retourne normalement l'utilisateur
-          // dans la propriété `user`.
-          setUser(data.user || data.data || null);
+          console.log(
+            "👤 Utilisateur connecté:",
+            data.user
+          );
+
+          console.log(
+            "🔐 Rôle:",
+            data.user?.roles?.name
+          );
+
+          setUser(
+            data.user ||
+            data.data ||
+            null
+          );
         } else {
           setUser(null);
         }
       } catch (error) {
         console.error(
-          "Erreur lors du chargement de la session:",
+          "❌ Erreur lors du chargement de la session:",
           error
         );
 
@@ -43,22 +62,43 @@ export function AuthProvider({ children }) {
     loadUser();
   }, []);
 
-  // Connexion
+  /*
+   * ==========================================================
+   * LOGIN
+   * ==========================================================
+   */
+
   const login = (userData) => {
+    console.log(
+      "🔐 LOGIN USER:",
+      userData
+    );
+
+    console.log(
+      "🔐 LOGIN ROLE:",
+      userData?.roles?.name
+    );
+
     setUser(userData);
   };
 
-  // Déconnexion
+  /*
+   * ==========================================================
+   * LOGOUT
+   * ==========================================================
+   */
+
   const logout = async () => {
     try {
-      // Si tu as déjà une route backend /auth/logout,
-      // on la laisse gérer la destruction de la session.
-      await fetch("/auth/logout", {
+      await fetch("/logout", {
         method: "POST",
         credentials: "include",
       });
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
+      console.error(
+        "❌ Erreur lors de la déconnexion:",
+        error
+      );
     } finally {
       setUser(null);
     }
@@ -69,17 +109,23 @@ export function AuthProvider({ children }) {
    * RÔLE UTILISATEUR
    * ==========================================================
    *
-   * Ton backend semble retourner :
+   * Le backend retourne :
    *
    * user.roles.name
    *
-   * Exemple :
+   * Exemples :
    *
-   * user.roles.name = "agent"
+   * superadmin
+   * admin
+   * secretaire
+   * agent
+   * enseignant
+   * comptable
    *
    */
 
-  const role = user?.roles?.name?.toLowerCase() || "";
+  const role =
+    user?.roles?.name?.toLowerCase() || "";
 
   /*
    * ==========================================================
@@ -92,7 +138,9 @@ export function AuthProvider({ children }) {
       return false;
     }
 
-    return role === requiredRole.toLowerCase();
+    return (
+      role === requiredRole.toLowerCase()
+    );
   };
 
   /*
@@ -120,6 +168,9 @@ export function AuthProvider({ children }) {
    * ==========================================================
    * RÔLES PRIVILÉGIÉS
    * ==========================================================
+   *
+   * Seuls admin et superadmin sont considérés
+   * comme utilisateurs privilégiés.
    */
 
   const isPrivileged = hasAnyRole(
@@ -131,20 +182,31 @@ export function AuthProvider({ children }) {
    * ==========================================================
    * RÔLES SPÉCIFIQUES
    * ==========================================================
-   *
-   * Ces valeurs peuvent être utilisées directement
-   * dans les composants si nécessaire.
    */
 
-  const isSuperAdmin = hasRole("superadmin");
+  const isSuperAdmin =
+    hasRole("superadmin");
 
-  const isAdmin = hasRole("admin");
+  const isAdmin =
+    hasRole("admin");
 
-  const isAgent = hasRole("agent");
+  const isSecretaire =
+    hasRole("secretaire");
 
-  const isEnseignant = hasRole("enseignant");
+  const isAgent =
+    hasRole("agent");
 
-  const isComptable = hasRole("comptable");
+  const isEnseignant =
+    hasRole("enseignant");
+
+  const isComptable =
+    hasRole("comptable");
+
+  /*
+   * ==========================================================
+   * CONTEXT
+   * ==========================================================
+   */
 
   return (
     <AuthContext.Provider
@@ -156,33 +218,42 @@ export function AuthProvider({ children }) {
         login,
         logout,
 
-        // Rôle
+        // Rôle actuel
         role,
 
         // Vérifications générales
         hasRole,
         hasAnyRole,
 
-        // Rôles privilégiés
+        // Utilisateur privilégié
         isPrivileged,
 
-        // Vérifications spécifiques
+        // Rôles spécifiques
         isSuperAdmin,
         isAdmin,
+        isSecretaire,
         isAgent,
         isEnseignant,
         isComptable,
       }}
     >
       {/*
-        Empêche l'application de clignoter ou
-        d'afficher des pages protégées avant
-        la validation de la session.
+        Empêche l'application de clignoter
+        ou d'afficher des pages protégées
+        avant la validation de la session.
       */}
+
       {children}
     </AuthContext.Provider>
   );
 }
+
+
+/*
+ * ==========================================================
+ * USE AUTH
+ * ==========================================================
+ */
 
 export function useAuth() {
   const context = useContext(AuthContext);
