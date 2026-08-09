@@ -300,9 +300,9 @@ export default function App() {
             <Route element={<DashboardLayout />}>
 
               <Route index element={<Dashboard />} />
-              <Route path="/profiles" element={<Profile />} />
+              <Route path="profiles" element={<Profile />} />
               <Route
-                path="/notifications"
+                path="all-notifications"
                 element={<Notifications />}/>
               <Route path="notes" element={<Notes />} />
               <Route path="settings" element={<Settings />} />
