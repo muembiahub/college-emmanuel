@@ -197,11 +197,23 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/40 backdrop-blur-md border border-slate-800/80 p-6 rounded-2xl shadow-xl">
         <div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            Bonjour, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{user?.prenom || "Administrateur"}</span> 👋
-          </h1>
+          Bonjour,{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+            {user?.firstname && user?.lastname
+              ? `${user.firstname} ${user.lastname}`
+              : user?.firstname || user?.lastname || "Utilisateur"}
+          </span>{" "}
+          👋
+        </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Tableau de bord général du Collège Emmanuel
-          </p>
+        Tableau de bord général du Collège Emmanuel
+      </p>
+
+    {user?.roles?.name && (
+      <p className="text-xs text-indigo-400 font-semibold uppercase mt-2">
+        {user.roles.name}
+      </p>
+    )}
         </div>
         <div className="flex items-center gap-3">
           <NotificationBell />

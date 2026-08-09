@@ -12,26 +12,35 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /*
-   * ==========================================================
-   * CHARGEMENT DE L'UTILISATEUR
-   * ==========================================================
-   */
+
+  /* ==========================================================
+     CHARGEMENT DE L'UTILISATEUR
+  ========================================================== */
 
   useEffect(() => {
     const loadUser = async () => {
       try {
-        // Le cookie de session est envoyé automatiquement.
         const response = await fetch("/current-user", {
           credentials: "include",
         });
 
         const data = await response.json();
 
-        if (response.ok && data.success) {
+        if (response.ok && data.success && data.user) {
+
           console.log(
             "👤 Utilisateur connecté:",
             data.user
+          );
+
+          console.log(
+            "📝 Prénom:",
+            data.user?.firstname
+          );
+
+          console.log(
+            "📝 Nom:",
+            data.user?.lastname
           );
 
           console.log(
@@ -39,21 +48,25 @@ export function AuthProvider({ children }) {
             data.user?.roles?.name
           );
 
-          setUser(
-            data.user ||
-            data.data ||
-            null
-          );
+          setUser(data.user);
+
         } else {
+          console.log(
+            "⚠️ Aucun utilisateur connecté"
+          );
+
           setUser(null);
         }
+
       } catch (error) {
+
         console.error(
           "❌ Erreur lors du chargement de la session:",
           error
         );
 
         setUser(null);
+
       } finally {
         setLoading(false);
       }
@@ -62,16 +75,26 @@ export function AuthProvider({ children }) {
     loadUser();
   }, []);
 
-  /*
-   * ==========================================================
-   * LOGIN
-   * ==========================================================
-   */
+
+  /* ==========================================================
+     LOGIN
+  ========================================================== */
 
   const login = (userData) => {
+
     console.log(
       "🔐 LOGIN USER:",
       userData
+    );
+
+    console.log(
+      "📝 Prénom:",
+      userData?.firstname
+    );
+
+    console.log(
+      "📝 Nom:",
+      userData?.lastname
     );
 
     console.log(
@@ -82,116 +105,150 @@ export function AuthProvider({ children }) {
     setUser(userData);
   };
 
-  /*
-   * ==========================================================
-   * LOGOUT
-   * ==========================================================
-   */
+
+  /* ==========================================================
+     LOGOUT
+  ========================================================== */
 
   const logout = async () => {
     try {
+
       await fetch("/logout", {
         method: "POST",
         credentials: "include",
       });
+
     } catch (error) {
+
       console.error(
         "❌ Erreur lors de la déconnexion:",
         error
       );
+
     } finally {
+
       setUser(null);
     }
   };
 
+
+  /* ==========================================================
+     RÔLE UTILISATEUR
+  ========================================================== */
+
   /*
-   * ==========================================================
-   * RÔLE UTILISATEUR
-   * ==========================================================
-   *
-   * Le backend retourne :
+   * Les rôles viennent directement de :
    *
    * user.roles.name
    *
-   * Exemples :
+   * Rôles disponibles :
    *
+   * promoteur
    * superadmin
-   * admin
    * secretaire
+   * comptable
    * agent
    * enseignant
-   * comptable
-   *
    */
 
   const role =
-    user?.roles?.name?.toLowerCase() || "";
+    user?.roles?.name?.toLowerCase().trim() || "";
+
+
+  /* ==========================================================
+     NOM COMPLET
+  ========================================================== */
 
   /*
-   * ==========================================================
-   * TESTER UN RÔLE
-   * ==========================================================
+   * Ton profil utilise :
+   *
+   * firstname
+   * lastname
    */
 
+  const firstName =
+    user?.firstname || "";
+
+  const lastName =
+    user?.lastname || "";
+
+  const fullName =
+    `${firstName} ${lastName}`.trim();
+
+
+  /* ==========================================================
+     TESTER UN RÔLE
+  ========================================================== */
+
   const hasRole = (requiredRole) => {
+
     if (!role || !requiredRole) {
       return false;
     }
 
     return (
-      role === requiredRole.toLowerCase()
+      role === requiredRole
+        .toLowerCase()
+        .trim()
     );
   };
 
-  /*
-   * ==========================================================
-   * TESTER PLUSIEURS RÔLES
-   * ==========================================================
-   *
-   * Exemple :
-   *
-   * hasAnyRole("admin", "superadmin")
-   *
-   */
+
+  /* ==========================================================
+     TESTER PLUSIEURS RÔLES
+  ========================================================== */
 
   const hasAnyRole = (...allowedRoles) => {
+
     if (!role) {
       return false;
     }
 
     return allowedRoles
-      .map((r) => r.toLowerCase())
+      .map((r) =>
+        r.toLowerCase().trim()
+      )
       .includes(role);
   };
 
+
+  /* ==========================================================
+     ACCÈS COMPLET
+  ========================================================== */
+
   /*
-   * ==========================================================
-   * RÔLES PRIVILÉGIÉS
-   * ==========================================================
+   * Ces rôles ont accès à l'ensemble
+   * du menu :
    *
-   * Seuls admin et superadmin sont considérés
-   * comme utilisateurs privilégiés.
+   * promoteur
+   * superadmin
+   * secretaire
+   * comptable
    */
 
-  const isPrivileged = hasAnyRole(
-    "admin",
-    "superadmin"
+  const hasFullAccess = hasAnyRole(
+    "promoteur",
+    "superadmin",
+    "secretaire",
+    "comptable"
   );
 
-  /*
-   * ==========================================================
-   * RÔLES SPÉCIFIQUES
-   * ==========================================================
-   */
+
+  /* ==========================================================
+     RÔLES SPÉCIFIQUES
+  ========================================================== */
+
+  const isPromoteur =
+    hasRole("promoteur");
 
   const isSuperAdmin =
     hasRole("superadmin");
 
-  const isAdmin =
-    hasRole("admin");
-
   const isSecretaire =
     hasRole("secretaire");
+
+  const isComptable =
+    hasRole("comptable");
 
   const isAgent =
     hasRole("agent");
@@ -199,69 +256,120 @@ export function AuthProvider({ children }) {
   const isEnseignant =
     hasRole("enseignant");
 
-  const isComptable =
-    hasRole("comptable");
 
-  /*
-   * ==========================================================
-   * CONTEXT
-   * ==========================================================
-   */
+  /* ==========================================================
+     RÔLE LIMITÉ
+  ========================================================== */
+
+  const isLimited =
+    hasAnyRole(
+      "agent",
+      "enseignant"
+    );
+
+
+  /* ==========================================================
+     CONTEXT
+  ========================================================== */
 
   return (
     <AuthContext.Provider
       value={{
+
+        /* ==============================
+           UTILISATEUR
+        ============================== */
+
         user,
+
         loading,
 
-        // Auth
+
+        /* ==============================
+           NOM
+        ============================== */
+
+        firstName,
+
+        lastName,
+
+        fullName,
+
+
+        /* ==============================
+           AUTH
+        ============================== */
+
         login,
+
         logout,
 
-        // Rôle actuel
+
+        /* ==============================
+           RÔLE
+        ============================== */
+
         role,
 
-        // Vérifications générales
+
+        /* ==============================
+           VÉRIFICATIONS
+        ============================== */
+
         hasRole,
+
         hasAnyRole,
 
-        // Utilisateur privilégié
-        isPrivileged,
 
-        // Rôles spécifiques
+        /* ==============================
+           ACCÈS
+        ============================== */
+
+        hasFullAccess,
+
+        isLimited,
+
+
+        /* ==============================
+           RÔLES
+        ============================== */
+
+        isPromoteur,
+
         isSuperAdmin,
-        isAdmin,
+
         isSecretaire,
-        isAgent,
-        isEnseignant,
+
         isComptable,
+
+        isAgent,
+
+        isEnseignant,
       }}
     >
-      {/*
-        Empêche l'application de clignoter
-        ou d'afficher des pages protégées
-        avant la validation de la session.
-      */}
 
       {children}
+
     </AuthContext.Provider>
   );
 }
 
 
-/*
- * ==========================================================
- * USE AUTH
- * ==========================================================
- */
+/* ==========================================================
+   USE AUTH
+========================================================== */
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+
+  const context =
+    useContext(AuthContext);
 
   if (!context) {
+
     throw new Error(
       "useAuth must be used inside AuthProvider"
     );
+
   }
 
   return context;
