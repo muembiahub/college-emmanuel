@@ -127,7 +127,7 @@ export default function FinancesHomepage() {
                         <span>Actions rapides</span>
                     </h3>
                     <div className="grid grid-cols-2 gap-2.5">
-                        <Shortcut to="/dashboard/finances/paiements" icon={<DollarSign size={18}/>} label="Nouveau Paiement"/>
+                        <Shortcut to="/dashboard/finances/paiements-eleves" icon={<DollarSign size={18}/>} label="Paiement Eleves"/>
                         <Shortcut to="/dashboard/finances/depenses" icon={<ArrowUpRight size={18}/>} label="Nouvelle Dépense"/>
                         <Shortcut to="/dashboard/finances/configurationfrais" icon={<Settings size={18}/>} label="Configurer Frais"/>
                         <Shortcut to="/dashboard/finances/rapports" icon={<FileBarChart2 size={18}/>} label="Rapports Détaillés"/>
