@@ -406,17 +406,62 @@ export const afficherPaiement = async (req, res) => {
 };
 
 export const enregistrerPaiement = async (req, res) => {
+
+  /* ==========================================================
+     TEST : VÉRIFIER QUE CE CONTRÔLEUR EST BIEN APPELÉ
+  ========================================================== */
+
+  console.log("");
+  console.log("🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥");
+  console.log("🔥 ENREGISTRER PAIEMENT APPELÉ");
+  console.log("🔥 ROUTE :", req.method, req.originalUrl);
+  console.log("🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥");
+  console.log("");
+
+  console.log(
+    "📦 BODY COMPLET :",
+    JSON.stringify(req.body, null, 2)
+  );
+
   try {
+
+    /* ==========================================================
+       RÉCUPÉRATION DES DONNÉES
+    ========================================================== */
+
     const {
       inscription_id,
       montant_verse,
       mode_paiement,
       reference_transaction = null,
       observation = "",
+      obligations = [],
     } = req.body;
 
+
+    console.log("========================================");
+    console.log("💰 NOUVEAU PAIEMENT");
+    console.log("🧾 Inscription :", inscription_id);
+    console.log("💵 Montant versé :", montant_verse);
+    console.log("💳 Mode paiement :", mode_paiement);
+
+    console.log(
+      "📋 OBLIGATIONS REÇUES DU FRONTEND :"
+    );
+
+    console.log(
+      JSON.stringify(
+        obligations,
+        null,
+        2
+      )
+    );
+
+    console.log("========================================");
+
+
     /* ==========================================================
-       VALIDATION
+       VALIDATION DE BASE
     ========================================================== */
 
     if (!inscription_id) {
@@ -426,107 +471,556 @@ export const enregistrerPaiement = async (req, res) => {
       });
     }
 
-    if (!montant_verse || Number(montant_verse) <= 0) {
+
+    if (
+      !montant_verse ||
+      Number(montant_verse) <= 0
+    ) {
       return res.status(400).json({
         success: false,
         message: "Le montant versé est invalide.",
       });
     }
 
+
     if (!mode_paiement) {
       return res.status(400).json({
         success: false,
-        message: "Le mode de paiement est obligatoire.",
+        message:
+          "Le mode de paiement est obligatoire.",
       });
     }
 
+
     /* ==========================================================
-       RECUPERATION DES OBLIGATIONS
+       VÉRIFIER LES OBLIGATIONS SÉLECTIONNÉES
     ========================================================== */
 
-    const obligationsDB = await getObligationsByInscription(inscription_id);
+    if (
+      !Array.isArray(obligations) ||
+      obligations.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Veuillez sélectionner au moins un frais à payer.",
+      });
+    }
+
+
+    /* ==========================================================
+       RÉCUPÉRER LES OBLIGATIONS DE L'INSCRIPTION
+    ========================================================== */
+
+    console.log("");
+    console.log(
+      "🔎 Recherche des obligations pour :",
+      inscription_id
+    );
+
+    const obligationsDB =
+      await getObligationsByInscription(
+        inscription_id
+      );
+
 
     if (!obligationsDB.length) {
       return res.status(400).json({
         success: false,
-        message: "Aucune obligation à payer.",
+        message:
+          "Aucune obligation financière trouvée.",
       });
     }
 
-    let resteARepartir = Number(montant_verse);
-    let montant_total = 0;
-    const details = [];
 
     /* ==========================================================
-       REPARTITION AUTOMATIQUE
+       AFFICHER LES OBLIGATIONS DISPONIBLES
     ========================================================== */
 
-    for (const obligation of obligationsDB) {
-      if (resteARepartir <= 0) break;
+    console.log("");
+    console.log(
+      "📦 OBLIGATIONS DISPONIBLES EN BASE"
+    );
 
-      const resteObligation = Number(obligation.reste);
+    console.table(
+      obligationsDB.map((o) => ({
+        obligation_id:
+          o.obligation_id,
 
-      const montantPaye = Math.min(
-        resteARepartir,
-        resteObligation
-      );
+        frais:
+          o.types_frais?.nom,
 
-      montant_total += montantPaye;
+        periode:
+          o.periode,
 
-      details.push({
-        obligation_id: obligation.obligation_id,
-        montant_paye: montantPaye,
-      });
+        mois:
+          o.mois?.nom,
 
-      resteARepartir -= montantPaye;
-    }
+        montant_du:
+          o.montant_du,
 
-    /* ==========================================================
-       CREATION DU PAIEMENT
-    ========================================================== */
+        montant_paye:
+          o.montant_paye,
 
-    const numero_recu = await generateNumeroRecu();
+        reste:
+          o.reste,
 
-    const paiement = await createPaiement({
-      inscription_id,
-      numero_recu,
-      montant_verse,
-      montant_total,
-      mode_paiement,
-      reference_transaction,
-      observation,
-    });
-
-    /* ==========================================================
-       DETAILS DU PAIEMENT
-    ========================================================== */
-
-    await createDetailPaiement(
-      details.map((detail) => ({
-        paiement_id: paiement.paiement_id,
-        obligation_id: detail.obligation_id,
-        montant_paye: detail.montant_paye,
+        statut:
+          o.statut,
       }))
     );
 
+
     /* ==========================================================
-       MISE A JOUR DES OBLIGATIONS
+       PRÉPARER LES DÉTAILS
     ========================================================== */
 
-    for (const detail of details) {
-      const obligation = obligationsDB.find(
-        (o) => o.obligation_id === detail.obligation_id
+    const details = [];
+
+    let montant_total = 0;
+
+
+    /* ==========================================================
+       TRAITER CHAQUE OBLIGATION SÉLECTIONNÉE
+    ========================================================== */
+
+    for (const item of obligations) {
+
+      console.log("");
+      console.log(
+        "========================================"
       );
+
+      console.log(
+        "🔎 OBLIGATION DEMANDÉE PAR LE FRONTEND"
+      );
+
+      console.log({
+        obligation_id:
+          item.obligation_id,
+
+        montant_paye:
+          item.montant_paye,
+      });
+
+
+      /* ========================================================
+         RECHERCHE EXACTE PAR obligation_id
+
+         IMPORTANT :
+         On ne cherche PAS par :
+         - inscription_id
+         - frais_id
+         - mois
+         - index
+
+         On cherche uniquement par obligation_id.
+      ======================================================== */
+
+      const obligation =
+        obligationsDB.find(
+          (o) =>
+            String(
+              o.obligation_id
+            ) ===
+            String(
+              item.obligation_id
+            )
+        );
+
+
+      /* ========================================================
+         OBLIGATION INTROUVABLE
+      ======================================================== */
+
+      if (!obligation) {
+
+        console.error(
+          "❌ OBLIGATION INTROUVABLE"
+        );
+
+        console.error(
+          "ID reçu :",
+          item.obligation_id
+        );
+
+        return res.status(400).json({
+          success: false,
+          message:
+            "Une des obligations sélectionnées est invalide.",
+
+          obligation_id:
+            item.obligation_id,
+        });
+      }
+
+
+      /* ========================================================
+         AFFICHER L'OBLIGATION EXACTEMENT TROUVÉE
+      ======================================================== */
+
+      console.log(
+        "✅ OBLIGATION TROUVÉE"
+      );
+
+      console.log({
+        obligation_id:
+          obligation.obligation_id,
+
+        frais:
+          obligation.types_frais?.nom,
+
+        periode:
+          obligation.periode,
+
+        mois:
+          obligation.mois?.nom,
+
+        montant_du:
+          obligation.montant_du,
+
+        montant_paye:
+          obligation.montant_paye,
+
+        reste:
+          obligation.reste,
+
+        statut:
+          obligation.statut,
+      });
+
+
+      /* ========================================================
+         MONTANT À PAYER
+      ======================================================== */
+
+      const montantPaye =
+        Number(
+          item.montant_paye
+        );
+
+
+      if (
+        !Number.isFinite(
+          montantPaye
+        ) ||
+        montantPaye <= 0
+      ) {
+
+        return res.status(400).json({
+          success: false,
+
+          message:
+            `Le montant du frais "${
+              obligation.types_frais?.nom ||
+              "inconnu"
+            }" est invalide.`,
+        });
+      }
+
+
+      /* ========================================================
+         RESTE DE L'OBLIGATION
+      ======================================================== */
+
+      const resteObligation =
+        Number(
+          obligation.reste || 0
+        );
+
+
+      /* ========================================================
+         NE PAS DÉPASSER LE RESTE
+      ======================================================== */
+
+      if (
+        montantPaye >
+        resteObligation
+      ) {
+
+        return res.status(400).json({
+          success: false,
+
+          message:
+            `Le montant payé pour "${
+              obligation.types_frais?.nom ||
+              "ce frais"
+            }${
+              obligation.mois?.nom
+                ? ` - ${obligation.mois.nom}`
+                : ""
+            }" dépasse le montant restant.`,
+
+          reste:
+            resteObligation,
+
+          montant_demande:
+            montantPaye,
+        });
+      }
+
+
+      /* ========================================================
+         AJOUTER LE DÉTAIL
+      ======================================================== */
+
+      details.push({
+        obligation_id:
+          obligation.obligation_id,
+
+        montant_paye:
+          montantPaye,
+      });
+
+
+      montant_total +=
+        montantPaye;
+
+
+      console.log(
+        "✅ DÉTAIL AJOUTÉ :",
+        {
+          obligation_id:
+            obligation.obligation_id,
+
+          frais:
+            obligation.types_frais?.nom,
+
+          mois:
+            obligation.mois?.nom,
+
+          montant_paye:
+            montantPaye,
+        }
+      );
+    }
+
+
+    /* ==========================================================
+       VÉRIFICATION DU TOTAL
+    ========================================================== */
+
+    const montantVerseNumber =
+      Number(
+        montant_verse
+      );
+
+
+    console.log("");
+    console.log(
+      "========================================"
+    );
+
+    console.log(
+      "💵 MONTANT VERSÉ :",
+      montantVerseNumber
+    );
+
+    console.log(
+      "💰 TOTAL SÉLECTIONNÉ :",
+      montant_total
+    );
+
+
+    const difference =
+      Math.abs(
+        montantVerseNumber -
+        montant_total
+      );
+
+
+    if (
+      difference > 0.01
+    ) {
+
+      console.error(
+        "❌ LE TOTAL NE CORRESPOND PAS"
+      );
+
+      return res.status(400).json({
+        success: false,
+
+        message:
+          `Le montant versé (${montantVerseNumber}) ne correspond pas au total des frais sélectionnés (${montant_total}).`,
+
+        montant_verse:
+          montantVerseNumber,
+
+        montant_selectionne:
+          montant_total,
+      });
+    }
+
+
+    /* ==========================================================
+       CRÉATION DU NUMÉRO DE REÇU
+    ========================================================== */
+
+    const numero_recu =
+      await generateNumeroRecu();
+
+
+    /* ==========================================================
+       CRÉATION DU PAIEMENT
+    ========================================================== */
+
+    const paiement =
+      await createPaiement({
+
+        inscription_id,
+
+        numero_recu,
+
+        montant_verse:
+          montantVerseNumber,
+
+        montant_total,
+
+        mode_paiement,
+
+        reference_transaction,
+
+        observation,
+      });
+
+
+    console.log("");
+    console.log(
+      "✅ PAIEMENT CRÉÉ"
+    );
+
+    console.log(
+      "🧾 Paiement ID :",
+      paiement.paiement_id
+    );
+
+    console.log(
+      "🧾 Numéro reçu :",
+      numero_recu
+    );
+
+
+    /* ==========================================================
+       CRÉER LES DÉTAILS DU PAIEMENT
+    ========================================================== */
+
+    const detailsPaiement =
+      details.map(
+        (detail) => ({
+          paiement_id:
+            paiement.paiement_id,
+
+          obligation_id:
+            detail.obligation_id,
+
+          montant_paye:
+            detail.montant_paye,
+        })
+      );
+
+
+    console.log("");
+    console.log(
+      "📋 DÉTAILS DU PAIEMENT"
+    );
+
+    console.log(
+      JSON.stringify(
+        detailsPaiement,
+        null,
+        2
+      )
+    );
+
+
+    await createDetailPaiement(
+      detailsPaiement
+    );
+
+
+    /* ==========================================================
+       MISE À JOUR DES OBLIGATIONS
+    ========================================================== */
+
+    for (
+      const detail of details
+    ) {
+
+      /* --------------------------------------------------------
+         Retrouver EXACTEMENT la même obligation
+      -------------------------------------------------------- */
+
+      const obligation =
+        obligationsDB.find(
+          (o) =>
+            String(
+              o.obligation_id
+            ) ===
+            String(
+              detail.obligation_id
+            )
+        );
+
+
+      if (!obligation) {
+        throw new Error(
+          `Obligation ${detail.obligation_id} introuvable lors de la mise à jour.`
+        );
+      }
+
+
+      /* --------------------------------------------------------
+         Ancien montant payé
+      -------------------------------------------------------- */
+
+      const ancienMontantPaye =
+        Number(
+          obligation.montant_paye ||
+          0
+        );
+
+
+      /* --------------------------------------------------------
+         Montant dû
+      -------------------------------------------------------- */
+
+      const montantDu =
+        Number(
+          obligation.montant_du ||
+          0
+        );
+
+
+      /* --------------------------------------------------------
+         Nouveau montant payé
+      -------------------------------------------------------- */
+
+      const montantPaye =
+        Number(
+          detail.montant_paye
+        );
+
 
       const nouveauMontantPaye =
-        Number(obligation.montant_paye) +
-        Number(detail.montant_paye);
+        ancienMontantPaye +
+        montantPaye;
 
-      const nouveauReste = Math.max(
-        Number(obligation.montant_du) -
+
+      /* --------------------------------------------------------
+         Nouveau reste
+      -------------------------------------------------------- */
+
+      const nouveauReste =
+        Math.max(
+          montantDu -
           nouveauMontantPaye,
-        0
-      );
+          0
+        );
+
+
+      /* --------------------------------------------------------
+         Nouveau statut
+      -------------------------------------------------------- */
 
       const statut =
         nouveauReste === 0
@@ -535,40 +1029,124 @@ export const enregistrerPaiement = async (req, res) => {
           ? "partiel"
           : "impaye";
 
+
+      /* --------------------------------------------------------
+         LOG IMPORTANT
+      -------------------------------------------------------- */
+
+      console.log("");
+      console.log(
+        "🔄 MISE À JOUR DE L'OBLIGATION"
+      );
+
+      console.log({
+        obligation_id:
+          obligation.obligation_id,
+
+        frais:
+          obligation.types_frais?.nom,
+
+        periode:
+          obligation.periode,
+
+        mois:
+          obligation.mois?.nom,
+
+        ancienMontantPaye,
+
+        montantPaye,
+
+        nouveauMontantPaye,
+
+        nouveauReste,
+
+        statut,
+      });
+
+
+      /* --------------------------------------------------------
+         UPDATE
+      -------------------------------------------------------- */
+
       await updateObligationPaiement(
         obligation.obligation_id,
+
         nouveauMontantPaye,
+
         nouveauReste,
+
         statut
       );
     }
 
+
     /* ==========================================================
-       RECUPERATION DU RAPPORT
-       (future vue_rapport_paiements)
+       RÉCUPÉRER LE RAPPORT DU PAIEMENT
     ========================================================== */
 
-    const rapport = await getPaiementById(
-      paiement.paiement_id
+    const rapport =
+      await getPaiementById(
+        paiement.paiement_id
+      );
+
+
+    /* ==========================================================
+       SUCCÈS
+    ========================================================== */
+
+    console.log("");
+    console.log(
+      "✅✅✅ PAIEMENT TERMINÉ AVEC SUCCÈS"
     );
 
-    
-    /* ==========================================================
-       REPONSE
-    ========================================================== */
+    console.log(
+      "🧾 Reçu :",
+      numero_recu
+    );
+
+    console.log(
+      "💰 Total :",
+      montant_total
+    );
+
+    console.log(
+      "========================================"
+    );
+
 
     return res.status(201).json({
       success: true,
-      message: "Paiement enregistré avec succès.",
-      data: rapport,
+
+      message:
+        "Paiement enregistré avec succès.",
+
+      data:
+        rapport,
     });
 
+
   } catch (error) {
-    console.error("Erreur enregistrement du paiement :", error);
+
+    console.error("");
+    console.error(
+      "❌❌❌ ERREUR ENREGISTREMENT PAIEMENT"
+    );
+
+    console.error(
+      error
+    );
+
+    console.error(
+      "========================================"
+    );
+
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+
+      message:
+        error.message ||
+        "Erreur lors de l'enregistrement du paiement.",
     });
   }
 };

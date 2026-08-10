@@ -1,4 +1,6 @@
+
 import React from "react";
+
 import {
   Bell,
   UserPlus,
@@ -12,38 +14,47 @@ import {
   Trash,
 } from "lucide-react";
 
-// Configuration des thèmes de couleurs et icônes par type de notification
+/* ==========================================================
+   CONFIGURATION DES TYPES DE NOTIFICATIONS
+========================================================== */
+
 const TYPE_CONFIG = {
   inscription: {
     icon: UserPlus,
     bg: "bg-emerald-50 border-emerald-100",
     color: "text-emerald-600",
   },
+
   paiement: {
     icon: CreditCard,
     bg: "bg-indigo-50 border-indigo-100",
     color: "text-indigo-600",
   },
+
   personnel: {
     icon: Users,
     bg: "bg-blue-50 border-blue-100",
     color: "text-blue-600",
   },
+
   classe: {
     icon: FileText,
     bg: "bg-amber-50 border-amber-100",
     color: "text-amber-600",
   },
+
   annee: {
     icon: Calendar,
     bg: "bg-purple-50 border-purple-100",
     color: "text-purple-600",
   },
+
   modification: {
     icon: Pencil,
     bg: "bg-sky-50 border-sky-100",
     color: "text-sky-600",
   },
+
   suppression: {
     icon: Trash2,
     bg: "bg-rose-50 border-rose-100",
@@ -51,120 +62,385 @@ const TYPE_CONFIG = {
   },
 };
 
+/* ==========================================================
+   CONFIGURATION PAR DÉFAUT
+========================================================== */
+
 const DEFAULT_CONFIG = {
   icon: Bell,
   bg: "bg-slate-100 border-slate-200",
   color: "text-slate-600",
 };
 
+/* ==========================================================
+   COMPOSANT
+========================================================== */
+
 export default function NotificationCard({
   notification,
   onMarkAsRead,
   onDelete,
 }) {
-  const config = TYPE_CONFIG[notification.type] || DEFAULT_CONFIG;
+  /* ----------------------------------------------------------
+     Sécurité
+  ---------------------------------------------------------- */
+
+  if (!notification) {
+    return null;
+  }
+
+  const config =
+    TYPE_CONFIG[notification.type] ||
+    DEFAULT_CONFIG;
+
   const Icon = config.icon;
 
-  // Formatage propre de la date
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
+  /* ==========================================================
+     FORMATAGE DE LA DATE
+  ========================================================== */
 
-    if (isToday) {
-      return `Aujourd'hui à ${date.toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`;
+  const formatDate = (dateString) => {
+    if (!dateString) {
+      return "";
     }
 
-    return date.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const date = new Date(dateString);
+
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    const now = new Date();
+
+    const isToday =
+      date.toDateString() ===
+      now.toDateString();
+
+    if (isToday) {
+      return `Aujourd'hui à ${date.toLocaleTimeString(
+        "fr-FR",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      )}`;
+    }
+
+    return date.toLocaleDateString(
+      "fr-FR",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
   };
+
+  /* ==========================================================
+     MARQUER COMME LUE
+  ========================================================== */
+
+  const handleMarkAsRead = async () => {
+    if (
+      !notification.lue &&
+      notification.notification_id
+    ) {
+      await onMarkAsRead?.(
+        notification.notification_id
+      );
+    }
+  };
+
+  /* ==========================================================
+     SUPPRIMER
+  ========================================================== */
+
+  const handleDelete = async () => {
+    if (
+      notification.notification_id
+    ) {
+      await onDelete?.(
+        notification.notification_id
+      );
+    }
+  };
+
+  /* ==========================================================
+     AFFICHAGE
+  ========================================================== */
 
   return (
     <div
-      className={`group relative flex items-start gap-4 p-4 transition-all duration-200 border-b border-slate-100/80 hover:bg-slate-50/80 ${
-        !notification.lue ? "bg-indigo-50/30" : "bg-white"
-      }`}
+      className={`
+        group
+        relative
+        flex
+        items-start
+        gap-4
+        border-b
+        border-slate-100/80
+        p-4
+        transition-all
+        duration-200
+        hover:bg-slate-50/80
+        ${
+          !notification.lue
+            ? "bg-indigo-50/30"
+            : "bg-white"
+        }
+      `}
     >
-      {/* Indicateur visuel d'état non-lu sur le bord gauche */}
+
+      {/* ======================================================
+          INDICATEUR NON LU
+      ====================================================== */}
+
       {!notification.lue && (
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 rounded-r-md" />
+        <div
+          className="
+            absolute
+            left-0
+            top-0
+            h-full
+            w-1
+            rounded-r-full
+            bg-indigo-600
+          "
+        />
       )}
 
-      {/* Conteneur d'icône avec profondeur et relief */}
+      {/* ======================================================
+          ICÔNE
+      ====================================================== */}
+
       <div
-        className={`flex-shrink-0 p-2.5 rounded-2xl border shadow-inner transition-transform duration-200 group-hover:scale-105 ${config.bg}`}
+        className={`
+          flex-shrink-0
+          rounded-2xl
+          border
+          p-2.5
+          shadow-inner
+          transition-transform
+          duration-200
+          group-hover:scale-105
+          ${config.bg}
+        `}
       >
-        <Icon size={20} className={config.color} />
+        <Icon
+          size={20}
+          className={config.color}
+        />
       </div>
 
-      {/* Contenu principal */}
-      <div className="flex-1 min-w-0 pr-2">
-        <div className="flex items-baseline justify-between gap-2">
+      {/* ======================================================
+          CONTENU
+      ====================================================== */}
+
+      <div
+        className="
+          min-w-0
+          flex-1
+          pr-2
+        "
+      >
+
+        <div
+          className="
+            flex
+            items-baseline
+            justify-between
+            gap-2
+          "
+        >
           <h3
-            className={`text-sm tracking-tight leading-snug truncate ${
-              notification.lue
-                ? "font-medium text-slate-700"
-                : "font-bold text-slate-900"
-            }`}
+            className={`
+              truncate
+              text-sm
+              leading-snug
+              tracking-tight
+              ${
+                notification.lue
+                  ? "font-medium text-slate-700"
+                  : "font-bold text-slate-900"
+              }
+            `}
           >
-            {notification.titre}
+            {notification.titre ||
+              "Notification"}
           </h3>
 
-          <span className="text-[11px] font-medium text-slate-400 whitespace-nowrap">
-            {formatDate(notification.created_at)}
+          <span
+            className="
+              whitespace-nowrap
+              text-[11px]
+              font-medium
+              text-slate-400
+            "
+          >
+            {formatDate(
+              notification.created_at ??
+                notification.date_envoi
+            )}
           </span>
         </div>
 
-        <p className="mt-1 text-xs text-slate-600 leading-relaxed break-words">
+        <p
+          className="
+            mt-1
+            break-words
+            text-xs
+            leading-relaxed
+            text-slate-600
+          "
+        >
           {notification.message}
         </p>
       </div>
 
-      {/* Zone des actions & badge d'état */}
-      <div className="flex-shrink-0 flex items-center gap-2">
-        {/* Badge "Nouveau" pour les notifications non lues */}
+      {/* ======================================================
+          ACTIONS
+      ====================================================== */}
+
+      <div
+        className="
+          flex
+          flex-shrink-0
+          items-center
+          gap-2
+        "
+      >
+
+        {/* ----------------------------------------------------
+            BADGE NOUVEAU
+        ---------------------------------------------------- */}
+
         {!notification.lue && (
-          <div className="hidden sm:flex items-center gap-1.5 bg-indigo-100/80 border border-indigo-200/60 px-2.5 py-1 rounded-full">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
+          <div
+            className="
+              hidden
+              items-center
+              gap-1.5
+              rounded-full
+              border
+              border-indigo-200/60
+              bg-indigo-100/80
+              px-2.5
+              py-1
+              sm:flex
+            "
+          >
+            <span
+              className="
+                relative
+                flex
+                h-2
+                w-2
+              "
+            >
+              <span
+                className="
+                  absolute
+                  inline-flex
+                  h-full
+                  w-full
+                  animate-ping
+                  rounded-full
+                  bg-indigo-400
+                  opacity-75
+                "
+              />
+
+              <span
+                className="
+                  relative
+                  inline-flex
+                  h-2
+                  w-2
+                  rounded-full
+                  bg-indigo-600
+                "
+              />
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+
+            <span
+              className="
+                text-[10px]
+                font-bold
+                uppercase
+                tracking-wider
+                text-indigo-700
+              "
+            >
               Nouveau
             </span>
           </div>
         )}
 
-        {/* Boutons d'action rapides */}
-        <div className="flex items-center gap-1 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          {/* Bouton : Marquer comme lu */}
+        {/* ----------------------------------------------------
+            BOUTONS
+        ---------------------------------------------------- */}
+
+        <div
+          className="
+            flex
+            items-center
+            gap-1
+            opacity-90
+            transition-opacity
+            duration-200
+            sm:opacity-0
+            sm:group-hover:opacity-100
+          "
+        >
+
+          {/* Marquer comme lue */}
+
           {!notification.lue && (
             <button
-              onClick={() => onMarkAsRead?.(notification.notification_id)}
+              type="button"
+              onClick={handleMarkAsRead}
               title="Marquer comme lue"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition-all cursor-pointer"
+              aria-label="Marquer comme lue"
+              className="
+                cursor-pointer
+                rounded-lg
+                border
+                border-transparent
+                p-1.5
+                text-slate-400
+                transition-all
+                hover:border-emerald-200
+                hover:bg-emerald-50
+                hover:text-emerald-600
+              "
             >
               <Check size={16} />
             </button>
           )}
 
-          {/* Bouton : Effacer / Supprimer */}
+          {/* Supprimer */}
+
           <button
-            onClick={() => onDelete?.(notification.notification_id)}
+            type="button"
+            onClick={handleDelete}
             title="Supprimer la notification"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all cursor-pointer"
+            aria-label="Supprimer la notification"
+            className="
+              cursor-pointer
+              rounded-lg
+              border
+              border-transparent
+              p-1.5
+              text-slate-400
+              transition-all
+              hover:border-rose-200
+              hover:bg-rose-50
+              hover:text-rose-600
+            "
           >
             <Trash size={16} />
           </button>
+
         </div>
       </div>
     </div>

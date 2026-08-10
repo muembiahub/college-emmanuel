@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useContext,
@@ -6,7 +7,7 @@ import {
   useCallback,
 } from "react";
 
-const NotificationContext = createContext();
+const NotificationContext = createContext(null);
 
 export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
@@ -18,44 +19,156 @@ export function NotificationProvider({ children }) {
 
   const chargerNotifications = useCallback(async () => {
     try {
-      const response = await fetch("/dashboard/notifications", {
-        credentials: "include",
-      });
+      const response = await fetch(
+        "/dashboard/notifications",
+        {
+          credentials: "include",
+        }
+      );
 
-      // 1. Si la réponse n'est pas OK (ex: 401 Unauthenticated ou 404 Not Found)
+      /* --------------------------------------------------------
+         SESSION NON AUTHENTIFIÉE
+      -------------------------------------------------------- */
+
+      if (response.status === 401) {
+        console.warn(
+          "⚠️ Session non authentifiée pour les notifications."
+        );
+
+        setNotifications([]);
+        return;
+      }
+
+      /* --------------------------------------------------------
+         AUTRE ERREUR HTTP
+      -------------------------------------------------------- */
+
       if (!response.ok) {
-        console.warn(`Erreur HTTP lors du chargement : ${response.status}`);
+        console.warn(
+          `⚠️ Erreur HTTP notifications : ${response.status}`
+        );
+
         return;
       }
 
-      // 2. Vérification que la réponse est bien du JSON
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        console.error("Le serveur renvoie du HTML au lieu de JSON.");
+      /* --------------------------------------------------------
+         VÉRIFIER QUE LA RÉPONSE EST DU JSON
+      -------------------------------------------------------- */
+
+      const contentType =
+        response.headers.get("content-type");
+
+      if (
+        !contentType ||
+        !contentType.includes(
+          "application/json"
+        )
+      ) {
+        console.error(
+          "❌ Le serveur renvoie autre chose que du JSON."
+        );
+
         return;
       }
 
-      const data = await response.json();
-      setNotifications(data ?? []);
+      /* --------------------------------------------------------
+         LIRE LE JSON
+      -------------------------------------------------------- */
+
+      const data =
+        await response.json();
+
+      /*
+       * Selon ton backend, la réponse peut être :
+       *
+       * [...]
+       *
+       * ou :
+       *
+       * {
+       *   success: true,
+       *   data: [...]
+       * }
+       */
+
+      const liste =
+        Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
+
+      setNotifications(liste);
+
     } catch (error) {
-      console.error("Erreur notifications :", error);
+      console.error(
+        "❌ Erreur notifications :",
+        error
+      );
+
     } finally {
       setLoading(false);
     }
   }, []);
 
   /* ==========================================================
-     INITIALISATION & POLLING (5s)
+     CHARGEMENT INITIAL
+     
+     UNE SEULE FOIS
   ========================================================== */
 
   useEffect(() => {
     chargerNotifications();
+  }, [chargerNotifications]);
 
-    const interval = setInterval(() => {
+  /* ==========================================================
+     RAFRAÎCHIR QUAND L'UTILISATEUR REVIENT SUR L'APPLICATION
+     
+     Pas de polling permanent.
+  ========================================================== */
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === "visible"
+      ) {
+        chargerNotifications();
+      }
+    };
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    return () => {
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+    };
+  }, [chargerNotifications]);
+
+  /* ==========================================================
+     RAFRAÎCHIR LORSQUE LA FENÊTRE REPREND LE FOCUS
+  ========================================================== */
+
+  useEffect(() => {
+    const handleFocus = () => {
       chargerNotifications();
-    }, 5000);
+    };
 
-    return () => clearInterval(interval);
+    window.addEventListener(
+      "focus",
+      handleFocus
+    );
+
+    return () => {
+      window.removeEventListener(
+        "focus",
+        handleFocus
+      );
+    };
   }, [chargerNotifications]);
 
   /* ==========================================================
@@ -63,49 +176,84 @@ export function NotificationProvider({ children }) {
   ========================================================== */
 
   const markAsRead = async (id) => {
-    // Mise à jour optimiste (immédiate sur l'interface)
+    /* --------------------------------------------------------
+       Mise à jour optimiste
+    -------------------------------------------------------- */
+
     setNotifications((prev) =>
       prev.map((notification) =>
         notification.notification_id === id
-          ? { ...notification, lue: true }
+          ? {
+              ...notification,
+              lue: true,
+            }
           : notification
       )
     );
 
     try {
-      const response = await fetch(`/dashboard/notifications/${id}/read`, {
-        method: "PUT",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `/dashboard/notifications/${id}/read`,
+        {
+          method: "PUT",
+          credentials: "include",
+        }
+      );
 
-      if (!response.ok) throw new Error("Échec du marquage serveur.");
+      if (!response.ok) {
+        throw new Error(
+          "Échec du marquage serveur."
+        );
+      }
+
     } catch (error) {
-      console.error("Erreur marquage notification :", error);
-      // En cas d'erreur, resynchronisation avec la base de données
-      chargerNotifications();
+      console.error(
+        "❌ Erreur marquage notification :",
+        error
+      );
+
+      await chargerNotifications();
     }
   };
 
   /* ==========================================================
-     SUPPRIMER / EFFACER UNE NOTIFICATION
+     SUPPRIMER UNE NOTIFICATION
   ========================================================== */
 
   const deleteNotification = async (id) => {
-    // Suppression optimiste
+    /* --------------------------------------------------------
+       Mise à jour optimiste
+    -------------------------------------------------------- */
+
     setNotifications((prev) =>
-      prev.filter((notification) => notification.notification_id !== id)
+      prev.filter(
+        (notification) =>
+          notification.notification_id !== id
+      )
     );
 
     try {
-      const response = await fetch(`/dashboard/notifications/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `/dashboard/notifications/${id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
 
-      if (!response.ok) throw new Error("Échec de la suppression serveur.");
+      if (!response.ok) {
+        throw new Error(
+          "Échec de la suppression serveur."
+        );
+      }
+
     } catch (error) {
-      console.error("Erreur suppression notification :", error);
-      chargerNotifications();
+      console.error(
+        "❌ Erreur suppression notification :",
+        error
+      );
+
+      await chargerNotifications();
     }
   };
 
@@ -114,47 +262,89 @@ export function NotificationProvider({ children }) {
   ========================================================== */
 
   const markAllRead = async () => {
-    // Mise à jour optimiste
+    /* --------------------------------------------------------
+       Mise à jour optimiste
+    -------------------------------------------------------- */
+
     setNotifications((prev) =>
-      prev.map((notification) => ({ ...notification, lue: true }))
+      prev.map((notification) => ({
+        ...notification,
+        lue: true,
+      }))
     );
 
     try {
-      const response = await fetch("/dashboard/notifications/read-all", {
-        method: "PUT",
-        credentials: "include",
-      });
+      const response = await fetch(
+        "/dashboard/notifications/read-all",
+        {
+          method: "PUT",
+          credentials: "include",
+        }
+      );
 
-      if (!response.ok) throw new Error("Échec du marquage global.");
+      if (!response.ok) {
+        throw new Error(
+          "Échec du marquage global."
+        );
+      }
+
     } catch (error) {
-      console.error("Erreur marquage global :", error);
-      chargerNotifications();
+      console.error(
+        "❌ Erreur marquage global :",
+        error
+      );
+
+      await chargerNotifications();
     }
   };
 
   /* ==========================================================
-     BADGES & COMPTEURS
+     BADGES
   ========================================================== */
 
   const badges = {
-    inscriptions: notifications.filter(
-      (n) => n.type === "inscription" && !n.lue
-    ).length,
+    inscriptions:
+      notifications.filter(
+        (notification) =>
+          notification.type === "inscription" &&
+          !notification.lue
+      ).length,
 
-    finances: notifications.filter(
-      (n) => n.type === "paiement" && !n.lue
-    ).length,
+    finances:
+      notifications.filter(
+        (notification) =>
+          notification.type === "paiement" &&
+          !notification.lue
+      ).length,
 
-    personnel: notifications.filter(
-      (n) => n.type === "personnel" && !n.lue
-    ).length,
+    personnel:
+      notifications.filter(
+        (notification) =>
+          notification.type === "personnel" &&
+          !notification.lue
+      ).length,
 
-    classe: notifications.filter(
-      (n) => n.type === "classe" && !n.lue
-    ).length,
+    classe:
+      notifications.filter(
+        (notification) =>
+          notification.type === "classe" &&
+          !notification.lue
+      ).length,
   };
 
-  const unreadCount = notifications.filter((n) => !n.lue).length;
+  /* ==========================================================
+     TOTAL NON LUES
+  ========================================================== */
+
+  const unreadCount =
+    notifications.filter(
+      (notification) =>
+        !notification.lue
+    ).length;
+
+  /* ==========================================================
+     CONTEXT
+  ========================================================== */
 
   return (
     <NotificationContext.Provider
@@ -163,7 +353,9 @@ export function NotificationProvider({ children }) {
         loading,
         unreadCount,
         badges,
+
         chargerNotifications,
+
         markAsRead,
         deleteNotification,
         markAllRead,
@@ -174,6 +366,19 @@ export function NotificationProvider({ children }) {
   );
 }
 
+/* ==========================================================
+   HOOK
+========================================================== */
+
 export function useNotification() {
-  return useContext(NotificationContext);
+  const context =
+    useContext(NotificationContext);
+
+  if (!context) {
+    throw new Error(
+      "useNotification must be used inside NotificationProvider"
+    );
+  }
+
+  return context;
 }
