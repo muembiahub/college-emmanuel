@@ -1160,19 +1160,43 @@ export const updateObligationPaiement = async (
 ========================================================== */
 
 export const getMontantEncaisse = async () => {
-  const { data, error } = await supabase
-    .from("paiements")
-    .select("montant_total")
-    .eq("statut", "valide");
+  const PAGE_SIZE = 1000;
+  let from = 0;
+  let total = 0;
+  let nombrePaiements = 0;
 
-  if (error) throw error;
+  while (true) {
+    const { data, error } = await supabase
+      .from("paiements")
+      .select("montant_total")
+      .eq("statut", "valide")
+      .range(from, from + PAGE_SIZE - 1);
 
-  return (
-    data?.reduce(
-      (total, paiement) => total + Number(paiement.montant_total),
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      break;
+    }
+
+    total += data.reduce(
+      (somme, paiement) =>
+        somme + Number(paiement.montant_total || 0),
       0
-    ) || 0
-  );
+    );
+
+    nombrePaiements += data.length;
+
+    if (data.length < PAGE_SIZE) {
+      break;
+    }
+
+    from += PAGE_SIZE;
+  }
+
+  console.log("Paiements valides chargés :", nombrePaiements);
+  console.log("Montant total encaissé :", total);
+
+  return total;
 };
 
 /* ==========================================================
