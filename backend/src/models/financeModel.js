@@ -1170,6 +1170,7 @@ export const getMontantEncaisse = async () => {
       .from("paiements")
       .select("montant_total")
       .eq("statut", "valide")
+      .order("paiement_id", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
 
     if (error) throw error;
