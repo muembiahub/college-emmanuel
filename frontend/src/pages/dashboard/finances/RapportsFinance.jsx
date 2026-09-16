@@ -56,6 +56,7 @@ export default function RapportsFinance() {
     try {
       setLoading(true);
       setError(false);
+      setStatsHomepage(null);
       const [resHomepage, resPaiements, resDepenses, resSections, resClasses] = await Promise.all([
         fetch("/finance/homepage", { credentials: "include" }),
         fetch("/finance/paiements", { credentials: "include" }),
@@ -64,10 +65,15 @@ export default function RapportsFinance() {
         fetch("/dashboard/classes/all"),
       ]);
 
-      if (resHomepage.ok) {
-        const json = await parseJSON(resHomepage);
-        if (json.success) setStatsHomepage(json.data.statistiques || null);
+      if (!resHomepage.ok) {
+        throw new Error("Impossible de charger le total des recettes.");
       }
+      const homepage = await parseJSON(resHomepage);
+      const statistiques = homepage.data?.statistiques;
+      if (!homepage.success || !Number.isFinite(statistiques?.montantEncaisse)) {
+        throw new Error("Le total des recettes est indisponible.");
+      }
+      setStatsHomepage(statistiques);
       if (resPaiements.ok) {
         const json = await parseJSON(resPaiements);
         if (json.success) {
@@ -100,7 +106,7 @@ export default function RapportsFinance() {
   const optionsList = useMemo(() => [...new Set(allPaiements.map((p) => p.nom_option).filter(Boolean))], [allPaiements]);
   const elevesList = useMemo(() => [...new Set(allPaiements.map((p) => p.nom_complet).filter(Boolean))], [allPaiements]);
 
-  const totalRecettes = statsHomepage?.montantEncaisse ?? allPaiements.reduce((acc, p) => acc + Number(p.montant_paye || 0), 0);
+  const totalRecettes = statsHomepage?.montantEncaisse;
   const totalDepenses = depenses.reduce((acc, d) => acc + Number(d.montant || 0), 0);
   const soldeNet = totalRecettes - totalDepenses;
 

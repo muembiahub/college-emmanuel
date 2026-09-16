@@ -974,7 +974,7 @@ export const getRecettesDuMois = async () => {
    DERNIERS PAIEMENTS
 ========================================================== */
 
-export const getDerniersPaiements = async() => {
+export const getDerniersPaiements = async (limit = 10) => {
   // 1. Récupérer les derniers paiements
   const { data: paiements, error } = await supabase
     .from("paiements")
@@ -986,7 +986,8 @@ export const getDerniersPaiements = async() => {
       )
     `)
     .eq("statut", "valide")
-    .order("date_paiement", { ascending: false });
+    .order("date_paiement", { ascending: false })
+    .limit(limit);
 
   if (error) throw error;
 
